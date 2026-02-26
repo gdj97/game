@@ -11,9 +11,13 @@
   </style>
 </head>
 <body>
-<div class="fs-3">1. 파일 탐색기 : \\DESKTOP-MSLD2B5\game  입력<br>
-	2. 각 이름앞의 번호에 해당하는 폴더에 복사<br>
-        3. 강사에게 push 요청하기
+<div class="fs-3">
+  1. 파일 탐색기 : \\DESKTOP-MSLD2B5\game  입력 => 각 번호에 해당하는 폴더가 있음<br>
+  2. 각 번호 폴더에 html 복사하기<br>
+      - html이름 : 번호_game.html<br>
+  3. pdf 폴더에 발표자료를 pdf로 만들어 복사하기
+      - pdf 이름 : 번호_이름.pdf<br>
+  4. 강사에게 push 요청하기
 </div>
 <br><br>
 <div><span class="fs-2">자바스크립트 발표</span>&emsp;<span>2026-02-27</span></div>
@@ -32,12 +36,12 @@
 </ul>
 
 <script>
-    let pdfs = ["JS게임 발표자료(고희권).pdf","gameProject발표.pdf","gd96백시현 원카드 가위바위보.pdf","GD 10.31 게임만들기 프로젝트 (GD 신정근).pdf","웹 게임 만들기 실습PDF_윤재훈.pdf",
-                "Javascript_임욱.pdf","두더지게임.pdf","tetris.pdf","슬라이드퍼즐_최준희.pdf","최지윤.pdf"];
-    let htmls = ["1_gameStart.html","game.html","원카드 가위바위보.html","Main.html","실습01_게임만들기.html",
-                 "game.html","PJ.game.html","tetris.html","슬라이드퍼즐_최종.html","Dobble.html"];
+    let pdfs = ["1_김강민.pdf","2_김승민.pdf","3_노현웅.pdf","4_백승준.pdf","5_손상현.pdf",
+                "6_장백온.pdf","7_조민재.pdf","8_최승우.pdf","9_허태웅.pdf"];
+    let htmls = ["1_game.html","2_game.html","3_game.html","4_game.html","5_game.html",
+                "6_game.html","7_game.html","8_game.html","9_game.html"];
     function pdfopen(i) {
-        let github = "https://gdj96.github.io/game/pdf/" + pdfs[i];
+        let github = "https://gdj97.github.io/game/pdf/" + pdfs[i];
         window.open(github,'','');
     }
     function linkopen(i) {
