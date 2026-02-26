@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JS Rhythm Game - Life System</title>
+    <style>
+        /* CSS 변수: 각 레인의 테마 색상 정의 */
+        :root { 
+            --color-s: #ff4444; /* S키: 레드 */
+            --color-d: #ffeb3b; /* D키: 옐로우 */
+            --color-j: #00f2ff; /* J키: 시안 */
+            --color-k: #4caf50; /* K키: 그린 */
+        }
+        body { background: #121212; color: white; display: flex; flex-direction: column; align-items: center; font-family: 'Arial', sans-serif; overflow: hidden; margin: 0; }
+        
+        /* 상단 정보 영역 (점수, 시간, 목숨) */
+        #header { width: 400px; display: flex; justify-content: space-between; padding: 20px; font-size: 1.2rem; font-weight: bold; }
+        #life-container { color: #ff4444; font-size: 1.5rem; }
+
+        /* 게임 메인 컨테이너 */
+        #game-container { position: relative; width: 400px; height: 600px; background: #1a1a1a; border: 2px solid #333; display: flex; }
+        
+        /* 레인 스타일 */
+        .lane { position: relative; width: 25%; height: 100%; border-right: 1px solid #333; box-sizing: border-box; }
+        .lane:last-child { border-right: none; }
+
+        /* 키 입력 시 레인 하단에서 올라오는 그라데이션 효과 */
+        .lane:nth-child(1).active { background: linear-gradient(to top, rgba(255, 68, 68, 0.4), transparent); }
+        .lane:nth-child(2).active { background: linear-gradient(to top, rgba(255, 235, 59, 0.4), transparent); }
+        .lane:nth-child(3).active { background: linear-gradient(to top, rgba(0, 242, 255, 0.4), transparent); }
+        .lane:nth-child(4).active { background: linear-gradient(to top, rgba(76, 175, 80, 0.4), transparent); }
+
+        /* 판정선: 이 선에 맞춰 키를 눌러야 함 */
+        #judge-line { position: absolute; bottom: 60px; width: 100%; height: 4px; background: white; box-shadow: 0 0 15px white; z-index: 5; }
+        
+        /* 노트 스타일: 스크립트에서 동적으로 색상 부여 */
+        .note { position: absolute; width: 100%; height: 25px; border-radius: 4px; left: 0; }
+
+        /* 중앙 판정 알림 영역 */
+        #display-area { position: absolute; top: 30%; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
+        #combo { font-size: 50px; color: white; font-weight: 900; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #judgment { font-size: 25px; font-weight: bold; text-shadow: 2px 2px 4px black; }
+
+        /* 하단 키 가이드 */
+        .key-guide { position: absolute; bottom: 10px; width: 100%; display: flex; justify-content: space-around; font-size: 1.5rem; font-weight: bold; }
+        #key-s { color: var(--color-s); }
+        #key-d { color: var(--color-d); }
+        #key-j { color: var(--color-j); }
+        #key-k { color: var(--color-k); }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <div id="score">SCORE: 0</div>
+        <div id="life-container">❤️❤️❤️</div>
+        <div id="timer">TIME: 60</div>
+    </div>
+
+    <div id="game-container">
+        <div class="lane"></div>
+        <div class="lane"></div>
+        <div class="lane"></div>
+        <div class="lane"></div>
+        
+        <div id="display-area">
+            <div id="combo"></div>
+            <div id="judgment">READY?</div>
+        </div>
+
+        <div id="judge-line"></div>
+        <div class="key-guide">
+            <span id="key-s">S</span><span id="key-d">D</span><span id="key-j">J</span><span id="key-k">K</span>
+        </div>
+    </div>
+
+    <button id="start-btn" style="margin-top:20px; padding:15px 40px; cursor:pointer; font-size:1.2rem; background: white; border:none; border-radius:5px; font-weight:bold;">게임 시작</button>
+
+    <script>
+        // --- 전역 변수 및 설정 ---
+        const laneElements = document.querySelectorAll('.lane');
+        const keys = ['s', 'd', 'j', 'k'];
+        const laneColors = ['var(--color-s)', 'var(--color-d)', 'var(--color-j)', 'var(--color-k)'];
+        
+        let score = 0;          // 현재 점수
+        let combo = 0;          // 연속 성공 횟수
+        let timeLeft = 60;      // 남은 시간
+        let lives = 3;          // 남은 목숨
+        let gameActive = false; // 게임 진행 상태
+        let spawnInterval, timerInterval;
+
+        const noteSpeed = 6;    // 노트가 내려오는 속도 (px/frame)
+        const judgeLineY = 540; // 판정선의 Y축 위치
+
+        // --- 게임 시작 로직 ---
+        document.getElementById('start-btn').addEventListener('click', function() {
+            if (gameActive) return; // 이미 게임 중이면 중복 실행 방지
+            this.style.visibility = 'hidden'; // 시작 버튼 숨기기
+            resetGame(); // 게임 데이터 초기화
+            gameActive = true;
+            
+            // 0.6초마다 0~3 사이의 난수를 생성하여 레인 결정
+            spawnInterval = setInterval(() => {
+                const randIndex = Math.floor(Math.random() * 4); // 결정된 인덱스의 레인에 노트 생성 함수 호출
+                createNote(randIndex);
+            }, 600);
+
+            // 1초마다 시간 감소 및 종료 체크
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `TIME: ${timeLeft}`;
+                if (timeLeft <= 0) endGame("시간종료! 클리어!");
+            }, 1000);
+        });
+
+        // 게임 데이터 리셋 함수
+        function resetGame() {
+            score = 0; combo = 0; timeLeft = 60; lives = 3;
+            document.getElementById('score').innerText = "SCORE: 0";
+            document.getElementById('combo').innerText = "";
+            document.getElementById('judgment').innerText = "GO!";
+            document.getElementById('timer').innerText = `TIME: 60`;
+            document.getElementById('life-container').innerText = "❤️❤️❤️";
+        }
+
+        // 게임 종료 처리 함수
+        function endGame(msg) {
+            gameActive = false; // 제어 플래그를 꺼서 모든 이동 로직 중단
+            // 실행 중인 모든 무한 루프(노트 생성, 타이머) 정지
+            clearInterval(spawnInterval); // 노트 생성 중단
+            clearInterval(timerInterval); // 타이머 중단
+            alert(`${msg}\n최종 점수: ${score}`);
+            document.getElementById('start-btn').style.visibility = 'visible'; // 초기 화면 복구
+            document.getElementById('judgment').innerText = "GAME OVER";
+        }
+
+        // --- 노트 생성 및 이동 로직 ---
+        function createNote(idx) {
+            const note = document.createElement('div');
+            note.className = 'note';
+            note.style.top = '-30px'; // 화면 위쪽 안보이는 곳에서 시작
+            
+            // 레인 색상 및 네온 효과 부여
+            note.style.backgroundColor = laneColors[idx];
+            note.style.boxShadow = `0 0 10px ${laneColors[idx]}`;
+            
+            laneElements[idx].appendChild(note); // 해당 레인에 노트 추가
+
+            let noteTop = -30;
+            // 개별 노트마다 고유의 타이머(setInterval) 할당
+            const move = setInterval(() => {
+                if (!gameActive) { clearInterval(move); note.remove(); return; }
+                
+                noteTop += noteSpeed; // 설정된 속도만큼 Y좌표(아래) 이동
+                note.style.top = noteTop + 'px';
+
+                // 화면 밖(600px)으로 나갔을 때 리소스 해제(miss 처리)
+                if (noteTop > 600) {
+                    clearInterval(move);        // 타이머 정지
+                    if (note.parentNode) {     // 메모리에서 객체 제거
+                        note.remove();         // 생명력 감소 함수 호출
+                        handleMiss(); // 미스 처리 함수 호출
+                    }
+                }
+            }, 20);                     // 50FPS 성능 유지
+            note.dataset.timerId = move; // 인터벌 ID 저장 
+        }
+
+        // --- 미스 및 목숨 처리 로직 ---
+        function handleMiss() {
+            lives--; // 목숨 감소
+            applyJudgment('MISS', '#ff4444', true); // 미스 판정 표시
+            
+            // 목숨 UI 업데이트
+            let heartIcons = "";
+            for(let i=0; i<lives; i++) heartIcons += "❤️";
+            document.getElementById('life-container').innerText = heartIcons || "OUT";
+
+            // 목숨이 0이면 즉시 종료
+            if (lives <= 0) {
+                endGame("목숨이 없습니다...");
+            }
+        }
+
+        // --- 키 입력 및 판정 로직 ---
+        window.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            const keyIdx = keys.indexOf(e.key.toLowerCase());
+            if (keyIdx === -1) return; // S,D,J,K 이외의 키 무시
+
+            laneElements[keyIdx].classList.add('active'); // 레인 불빛 효과
+
+            const notes = laneElements[keyIdx].querySelectorAll('.note');
+            if (notes.length > 0) {
+                const target = notes[0]; // 해당 레인에서 가장 아래에 있는 노트 선택
+                const currentY = parseInt(target.style.top);    // 현재 노트 위치
+                const distance = Math.abs(currentY - judgeLineY); // 판정선과의 오차 계산
+
+                
+                if (distance < 100) { // 100px 범위 내 성공 인정
+                    clearInterval(target.dataset.timerId); // 판정 성공 시 이동 정지
+                    target.remove(); // 노트 제거
+                    
+                    // 거리에 따른 차등 등급 부여
+                    if (distance < 40) applyJudgment('PERFECT', '#ffffff');
+                    else if (distance < 70) applyJudgment('GREAT', '#ffff00');
+                    else applyJudgment('GOOD', '#cccccc');
+                }
+            }
+        });
+
+        // 키를 뗄 때 레인 불빛 제거
+        window.addEventListener('keyup', (e) => {
+            const keyIdx = keys.indexOf(e.key.toLowerCase());
+            if (keyIdx !== -1) {
+                laneElements[keyIdx].classList.remove('active');
+            }
+        });
+
+        // --- 판정 결과 UI 업데이트 함수 ---
+        function applyJudgment(text, color, isMiss = false) {
+            const judgeEl = document.getElementById('judgment');
+            const comboEl = document.getElementById('combo');
+            judgeEl.innerText = text;
+            judgeEl.style.color = color;
+
+            if (isMiss) {
+                combo = 0; // 콤보 초기화
+                comboEl.innerText = "";
+            } else {
+                combo++; // 콤보 증가
+                // 판정별 점수 부여
+                score += (text === 'PERFECT' ? 100 : text === 'GREAT' ? 50 : 20);
+                comboEl.innerText = combo > 1 ? `${combo} COMBO` : "";
+                document.getElementById('score').innerText = `SCORE: ${score}`;
+            }
+        }
+    </script>
+</body>
+</html>
