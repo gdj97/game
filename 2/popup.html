@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>팝업</title>
+
+<style>
+body{
+    margin:0;
+    background:black;
+}
+
+/* 팝업 전체 고정 */
+#popupWrap{
+    position:relative;
+    width:768px;
+    height:512px;
+    margin:0 auto;
+    overflow:hidden;
+}
+
+/* 배경 */
+#popupImg{
+    width:100%;
+    height:100%;
+    position:absolute;   
+    top:0;              
+    left:0;             
+    z-index:0;          
+}
+
+/* 버튼은 전부 absolute */
+#itemBtn,
+#oilBtn,
+#scissorsBtn,
+#rootProcessBtn{
+    position:absolute; 
+    z-index:10; 
+    background:transparent;   
+    border:none;             
+    padding:0;   
+
+}
+/* 버튼 디자인 */
+.exitBtn{
+display: inline-block;
+text-align: center;
+line-height: 70px;
+font-size:30px;
+font-family:Trebuchet MS;
+width:200px;
+height:70px;
+border-width:4px;
+color:#ffffff;
+border-color:rgb(121, 86, 51);
+border-radius:42px;
+background:linear-gradient(#7c562d, #634b30);
+cursor: pointer;
+}
+
+.exitBtn:hover{
+background: linear-gradient(#777470, #b9a58f);
+}
+
+/*  화면 아래 가운데 고정 */
+.popupCenterBtn{
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index:9999; 
+}
+ /* 삽 */
+#itemBtn {
+    background: none; 
+    border: none; 
+    bottom: 170px;
+    left: 350px;
+    
+    padding: 0; 
+    cursor: pointer;
+}
+
+#oilBtn{ /* 오일 */
+    background: none; 
+    border: none; 
+    bottom: 100px;
+    left: 250px;
+    
+    padding: 0; 
+    width: 250px;  /* 여기서 버튼 전체 크기 조절 */
+    height: auto;
+    cursor: pointer;
+}
+
+#scissorsBtn{   /* 가위 */
+    background: none; 
+    border: none; 
+    top: 100px;
+    left: 10px;
+    
+    padding: 0; 
+    width: 350px;  /* 여기서 버튼 전체 크기 조절 */
+    height: auto;
+    cursor: pointer;
+}
+
+#rootStageImg{
+    padding: 0; 
+    width: 600px;  /* 여기서 버튼 전체 크기 조절 */
+    height: auto;
+    cursor: pointer;
+}
+
+#rootProcessBtn{
+    position:absolute;
+    top:40px;
+    left:80px; 
+    background:none;
+    border:none;
+}
+
+
+</style>
+</head>
+
+<body>
+<div id="popupWrap">
+<button class="exitBtn popupCenterBtn" onclick="window.close()">
+    🐹나가기🐹
+</button>
+
+<img id="popupImg">
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const imgName = params.get("img");
+
+document.getElementById("popupImg").src = "img/" + imgName;
+
+
+//소파밑 버튼 숨기기
+if(imgName === "popup9.png"){
+    const exitBtn = document.querySelector(".exitBtn");
+    if(exitBtn){
+        exitBtn.style.display = "none";
+    }
+}
+
+</script>
+
+<button id="itemBtn">
+   <img src="img/shovel1.png" width="400px">
+</button>
+
+<button id="oilBtn" style="display:none;">
+   <img src="img/oil.png" width="190px">
+</button>
+
+<button id="scissorsBtn" style="display:none;">
+   <img src="img/scissors.png" width="400px">
+</button>
+
+<button id="rootProcessBtn" 
+        style="display:none;">
+    <img id="rootStageImg" src="img/endBtn1.png">
+</button>
+
+<script>
+
+
+
+// popup2일 때만 버튼 보이기
+if (imgName === "popup2.png") { // 삽
+    document.getElementById("itemBtn").style.display = "block";
+} else {
+    document.getElementById("itemBtn").style.display = "none";
+}
+
+
+if (imgName === "popup7.png") { // 오일
+    document.getElementById("oilBtn").style.display = "block";
+} else {
+    document.getElementById("oilBtn").style.display = "none";
+}
+
+
+if (imgName === "popup5.png") { // 가위
+    document.getElementById("scissorsBtn").style.display = "block";
+} else {
+    document.getElementById("scissorsBtn").style.display = "none";
+}
+
+if (imgName === "popup8.png") {
+    document.getElementById("rootProcessBtn").style.display = "block";
+}
+
+
+// 버튼 클릭 시 부모창에 아이템 전달
+document.getElementById("itemBtn").onclick = function() {
+    // 메인창 인벤토리에 추가
+    window.opener.addItem("shovel");
+    // 버튼 사라지게
+    document.getElementById("itemBtn").style.display = "none";
+
+};
+
+
+document.getElementById("oilBtn").onclick = function() {
+    // 메인창 인벤토리에 추가
+    window.opener.addItem("oil");
+    // 버튼 사라지게
+    document.getElementById("oilBtn").style.display = "none";
+};
+
+document.getElementById("scissorsBtn").onclick = function() {
+    // 메인창 인벤토리에 추가
+    window.opener.addItem("scissor");
+    // 버튼 사라지게
+    document.getElementById("scissorsBtn").style.display = "none";
+};
+
+document.getElementById("popupImg").src
+
+console.log(imgName);
+
+let rootStage = 0;
+
+document.getElementById("rootProcessBtn").onclick = function(){
+
+    // 1단계 : 가위
+    if(rootStage === 0){
+        if(window.opener.hasItem("scissor")){
+            window.opener.removeItem("scissor");
+            rootStage = 1;
+            document.getElementById("rootStageImg").src = "img/endBtn2.png";
+            alert("✂️ 뿌리를 잘랐다!");
+        } else {
+            alert("😭뿌리가 너무 단단해서 나갈수가 없어요! 자를게 필요해요");
+        }
+        return;
+    }
+
+
+    // 2단계 : 오일
+    if(rootStage === 1){
+        if(window.opener.hasItem("oil")){
+            window.opener.removeItem("oil");
+            rootStage = 2;
+            document.getElementById("rootStageImg").src = "img/endBtn2.png";
+            alert("🫙 흙이 부드러워졌다! 충분히 부드러워서 팔수있을것같다!");
+        } else {
+            alert("흙이 너무 단단해서 팔수가 없어요! 무언가 방법이 없을까요?");
+        }
+        return;
+    }
+
+    // 3단계 : 삽
+    if(rootStage === 2){
+        if(window.opener.hasItem("shovel")){
+            window.opener.removeItem("shovel");
+            rootStage = 3;
+            document.getElementById("rootStageImg").src = "img/btnInvisible.png";
+            alert("🐹 길이 완전히 열렸다! 나가자!");
+        } else {
+            alert("삽이 필요하다!");
+        }
+        return;
+    }
+
+    // 4단계 : 탈출
+    if(rootStage === 3){
+        window.opener.finishEscape();   // 메인에서 탈출 처리
+        window.close();
+    }
+
+    
+
+    
+
+};
+</script>
+
+</div>
+</body>
+</html>

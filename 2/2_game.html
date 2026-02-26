@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐹 햄스터 대 탈출! 🐾</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Playwrite+NZ+Basic:wght@100..400&family=Stylish&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+
+
+
+            display: flex;
+            justify-content: center;
+            /* 가로 중앙 */
+            align-items: center;
+            /* 세로 중앙 */
+            height: 100vh;
+            background-color: #dfd6c9;
+        }
+
+        .wrap {
+            text-align: center;
+        }
+
+        #endPage1,
+        /* 사망페이지 폰트 중앙정렬 */
+        #endPage2,
+        #endPage3,
+        #endPage4,
+        #endPageTime,
+        /* 시간초과 페이지 */
+        #winPage {
+            /* 성공 페이지 */
+            margin: 0;
+            text-align: center;
+        }
+
+
+        /* 폰트 */
+        body {
+            font-family: "Noto Sans KR", sans-serif;
+        }
+
+        h1 {
+            font-family: "Stylish", sans-serif;
+            font-size: 50px;
+        }
+
+        h2 {
+            font-family: "Noto Sans KR", sans-serif;
+            font-weight: 0;
+        }
+
+        pre {
+            font-family: "Noto Sans KR", sans-serif;
+            font-weight: 0;
+        }
+
+        #timerDisplay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #ff4444;
+            background: white;
+            padding: 10px;
+            border: 3px solid #7c562d;
+            border-radius: 10px;
+            z-index: 100;
+        }
+
+        /* 버튼 */
+        .buttonClass {
+            display: inline-block;
+            text-align: center;
+            line-height: 70px;
+            /* 버튼 높이랑 맞추기 */
+            font-size: 30px;
+            font-family: Trebuchet MS;
+            width: 200px;
+            height: 70px;
+            border-width: 4px;
+            color: #ffffff;
+            border-color: rgb(121, 86, 51);
+            border-top-left-radius: 42px;
+            border-top-right-radius: 42px;
+            border-bottom-left-radius: 42px;
+            border-bottom-right-radius: 42px;
+            box-shadow: inset 0px 0px 0px 0px #a6827e;
+            text-shadow: inset 0px -6px 0px #54381e;
+            background: linear-gradient(#7c562d, #634b30);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .buttonClass:hover {
+            /* 마우스 반응! 호버! */
+            background: linear-gradient(#777470, #b9a58f);
+        }
+
+
+        /* --------------버튼 위치-------------------------------------------- */
+
+
+        #gameArea1,
+        #gameArea2,
+        #gameArea3,
+        #gameArea4 {
+            position: relative;
+             width: 90vw;        /* 화면에 따라 줄어듦 */
+            max-width: 768px;   /* 최대 크기 */
+            aspect-ratio: 3 / 2; /* 1536x1024 비율 */
+            margin: auto;
+}
+
+        .btn {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        /* 각각 위치 다르게 */
+
+        .ham1 {
+            /* 치즈버튼 */
+            top: 320px;
+            left: 380px;
+        }
+
+        .ham2 {
+            /* 유저버튼 */
+            top: 400px;
+            left: 270px;
+        }
+
+        .ham4 {
+            /* 리모콘 버튼 */
+            top: 300px;
+            left: 140px
+        }
+
+        #gamePage2 .ham2 {
+            /* 유저창고 위치 */
+            top: 450px;
+            left: 500px;
+        }
+
+        .popupBtn1 {
+            /* 서랍아래 팝업버튼  */
+            top: 250px;
+            left: 90px;
+        }
+
+
+        .popupBtn2 {
+            /* 화분 팝업버튼  */
+            top: 100px;
+            left: 330px;
+        }
+
+        .popups1 {
+            /* 창고 수납장 팝업버튼  */
+            top: 300px;
+            left: 130px;
+        }
+
+        .popups2 {
+            /* 창고 책상 팝업버튼  */
+            top: 250px;
+            left: 580px;
+        }
+
+        .popups3 {
+            /* 주방 도마 팝업버튼  */
+            top: 140px;
+            left: 110px;
+        }
+
+        .popups4 {
+            /* 주방 타일 팝업버튼  */
+            top: 500px;
+            left: 580px;
+        }
+
+        .popups7 {
+            /* 창고 선반2 팝업버튼  */
+            top: 100px;
+            left: 130px;
+        }
+
+        .popups8{
+            /* 탈출구 */
+            top: 230px;
+            left: 350px;
+        }
+        .popupsSUP{
+            top: 230px;
+            left: 350px;
+        }
+
+
+
+
+        .ham3 {
+            /* 문버튼 */
+            top: 350px;
+            left: 1px;
+            width: 70px;
+            height: 70px;
+        }
+
+        #gamePage1 .door2 {
+            /* 거실 -> 주방 */
+            top: 350px;
+            left: 630px;
+        }
+
+        #gamePage2 .door {
+            /* 창고 -> 거실 */
+            top: 400px;
+            left: 630px;
+        }
+
+        #gamePage3 .door4 {
+            /* 주방 -> 거실 */
+            top: 470px;
+            left: 1px;
+        }
+
+        #gamePage3 .null1 {
+            /* 고양이 투명 버튼 */
+            top: 70px;
+            left: 460px;
+        }
+
+        /* 추가된 버튼 위치 */
+        #gamePage3 .scissors {
+            /* 주방에 있는 가위 */
+            top: 400px;
+            left: 500px;
+        }
+
+        #gamePage1 .finalDoor {
+            /* 거실에서 나무뿌리 맵으로 가는 비밀문 (예: 바닥 틈새) */
+            top: 550px;
+            left: 320px;
+        }
+
+
+
+        /* 요리연기 이펙트 */
+
+        .steam {
+            position: absolute;
+            top: 33px;
+            /* 냄비 위치에 맞게 조절 */
+            left: 400px;
+            /* 냄비 위치에 맞게 조절 */
+            width: 40px;
+            height: 80px;
+            pointer-events: none;
+        }
+
+        .steam::before,
+        .steam::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            width: 30px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 70%;
+            animation: steamRise 2s infinite ease-out;
+        }
+
+        .steam::after {
+            left: 15px;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes steamRise {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateY(-100px) scale(1.8);
+                opacity: 0;
+            }
+        }
+
+
+        #inventory {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 90px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 3px dashed #7c562d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .inv-slot {
+            width: 90px;
+            height: 90px;
+            border: 1px solid #ccc;
+            margin: 5px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<audio src="backgroundMusic.mp3" autoplay loop></audio>
+<div id="timerDisplay" style="display:none;">60</div>
+
+    <div id="inventory" style="display:none;">
+        <div id="slot1" class="inv-slot"></div>
+        <div id="slot2" class="inv-slot"></div>
+        <div id="slot3" class="inv-slot"></div>
+
+    </div>
+
+    <div class="wrap">
+        <h1>🐹 햄스터 대 탈출! 🐾</h1>
+        <img src="img/waiting screen.png" width="400">
+        <h2>😺고양이에게 잡혀버렸다!</h2>
+        <pre>
+    밧줄을 풀고 탈출하는 사이에 
+    🍲고양이의 요리가 거의 다 완성되었다! 
+    
+    고양이가 올⏰30초 정도의 시간 안에 
+    집안을 탐색해서 탈출하자! 🐾
+    </pre>
+        <a href="#" class="buttonClass" onclick="startGame()">🐹탈출하기🐹</a>
+    </div>
+
+    <script> //게임실행버튼 및 타이머 로직
+        var timeLeft = 60;
+        
+        var timerId;
+        var hasScissors = false;
+
+        function startGame() {
+
+            document.querySelector(".wrap").style.display = "none";
+            document.getElementById("gamePage1").style.display = "block";
+
+            // 타이머 및 인벤토리 표시
+            document.getElementById("timerDisplay").style.display = "block";
+            document.getElementById("inventory").style.display = "flex";
+
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = 30; /* 시간초 설정 */
+            document.getElementById("timerDisplay").innerText = timeLeft;
+            timerId = setInterval(function () {
+                timeLeft--;
+                document.getElementById("timerDisplay").innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    gameOverTime();
+                }
+            }, 1000);
+        }
+
+       function gameOverTime() {
+
+    clearInterval(timerId);
+
+    // 모든 게임 화면 숨기기
+    document.querySelectorAll('[id^="gamePage"]').forEach(el => el.style.display = 'none');
+    document.getElementById("timerDisplay").style.display = "none";
+    document.getElementById("inventory").style.display = "none";
+
+    // 소파 상태면 특수엔딩
+    if (isSofaMode) {
+        document.getElementById("endPageSofa").style.display = "block";
+        alert("😼 고양이가 소파를 들춰봤습니다...");
+        if (livingPop && !livingPop.closed) {
+        livingPop.close();
+}
+
+        return;
+    }
+
+
+            document.getElementById("endPageTime").style.display = "block";
+            alert("⏰ 시간이 다 되었습니다! \n고양이가 요리를 마치고 돌아왔습니다!\n\n🍽️당신은 저녁 식사가 되었습니다.🍗");
+        }
+    </script>
+
+    <div id="gamePage1" style="display:none;">
+        <div id="gameArea1">
+            <h1> 거실 </h1>
+            <div style="position: relative;">
+                <img src="img/background1.png" width="700">
+                <button class="btn ham1" onclick="gameOver1()"><img src="img/btnCheese.png" width="100"></button>
+
+                <button class="btn ham2" onclick="gameOver2()"> <img src="img/btnUser.png" width="100"></button>
+
+                <button class="btn ham4" onclick="gameOver4()"> <img src="img/btnRemote.png" width="100"></button>
+                <button class="btn popupsSUP" onclick="openPopup9()"> <img src="img/btnInvisible.png" width="80"></button>
+
+
+                <!-- 팝업 -->
+                <button class="btn popupBtn1" onclick="openPopup1()">
+                    <img src="img/btnInvisible.png" width="90">
+                </button>
+
+                <button class="btn popupBtn2" onclick="openPopup2()">
+                    <img src="img/btnInvisible.png" width="90">
+                </button>
+
+
+                <button class="btn ham3" onclick="btndoor1()"> <img src="img/btnDoor.png" width="50"></button>
+                <button class="btn door2" onclick="btndoor3()"> <img src="img/btnDoor.png" width="50"></button>
+
+
+            </div>
+        </div>
+    </div>
+
+    <div id="gamePage2" style="display:none;">
+        <div id="gameArea2">
+            <h1> 창고 </h1>
+            <div style="position: relative;">
+                <img src="img/background2.png" width="700">
+
+                <button class="btn ham2" onclick="gameOver2()"> <img src="img/btnUser.png" width="100"></button>
+                <button class="btn door" onclick="btndoor2()"> <img src="img/btnDoor.png" width="50"></button>
+                <button class="btn popups1" onclick="openPopup3()"> <img src="img/btnInvisible.png" width="100"></button>
+                <button class="btn popups2" onclick="openPopup4()"> <img src="img/btnInvisible.png" width="80"></button>
+                <button class="btn popups7" onclick="openPopup7()"> <img src="img/btnInvisible.png" width="80"></button>
+                <button class="btn popups8" onclick="openPopup8()"> <img src="img/btnInvisible.png" width="80">
+                </button>
+
+
+            </div>
+        </div>
+    </div>
+
+
+    <div id="gamePage3" style="display:none;">
+        <div id="gameArea3">
+            <h1> 주방 </h1>
+            <div style="position: relative;">
+                <img src="img/background3.png" width="700">
+
+                <div class="steam"></div>
+
+                <button class="btn ham2" onclick="gameOver2()"> <img src="img/btnUser.png" width="100"></button>
+                <button class="btn door4" onclick="btndoor4()"> <img src="img/btnDoor.png" width="50"></button>
+                <button class="btn null1" onclick="gameOver3()"> <img src="img/btnInvisible.png" width="200"></button>
+                <button class="btn popups3" onclick="openPopup5()"> <img src="img/btnInvisible.png" width="80"></button>
+                <button class="btn popups4" onclick="openPopup6()"> <img src="img/btnInvisible.png" width="80"></button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        function gameOver1() {   //치즈 버튼 클릭.
+            clearInterval(timerId);
+            document.getElementById("gamePage1").style.display = "none";
+            document.getElementById("endPage1").style.display = "block";
+            document.getElementById("timerDisplay").style.display = "none";
+            document.getElementById("inventory").style.display = "none";
+            alert("맛있는 🧀치즈를 먹고 \n식곤증이 와서 💤낮잠을 자다가 😼고양이에게 들켰습니다!\n\n🍽️고양이의 저녁밥이 되었습니다!🍗");
+        }
+
+    let inventoryState = {
+    shovel: false,
+    oil: false,
+    scissor: false
+    };
+
+
+        function addItem(itemName) {
+
+            inventoryState[itemName] = true;
+
+
+    if(itemName === "shovel"){
+    document.getElementById("slot1").style.backgroundImage = "url('img/shovel2.png')";
+    alert("🐹 모종삽을 획득했습니다! 무언가를 팔 수 있을 것 같습니다!");
+    }    
+        
+        if(itemName === "oil"){
+            document.getElementById("slot2").style.backgroundImage = "url('img/oil.png')";
+        alert("🫙 유연액을 얻었습니다! 단단한걸 부드럽게 만들 수 있을 것 같습니다!");
+        }
+            if(itemName === "scissor"){
+            document.getElementById("slot3").style.backgroundImage = "url('img/scissors.png')";
+        alert("✂️ 가위를 얻었습니다! 무언가 자를수 있을 것 같습니다!");
+            }
+    }
+
+
+
+function hasItem(name){
+    return inventoryState[name];
+}
+
+function removeItem(name){
+    inventoryState[name] = false;
+
+    if(name === "shovel"){
+        document.getElementById("slot1").style.backgroundImage = "none";
+    }
+    if(name === "oil"){
+        document.getElementById("slot2").style.backgroundImage = "none";
+    }
+    if(name === "scissor"){
+        document.getElementById("slot3").style.backgroundImage = "none";
+    }
+}
+
+function finishEscape(){
+    clearInterval(timerId);
+    document.getElementById("timerDisplay").style.display = "none";
+    document.getElementById("inventory").style.display = "none";
+    document.getElementById("gamePage2").style.display = "none";
+    document.getElementById("winPage").style.display = "block";
+}
+
+    </script>
+
+
+    <div id="endPage1" style="display:none;">
+        <h1>💀 Game Over 💀</h1>
+        <img src="img/end1.png" style="width:600px; object-fit:cover;">
+        <br>
+        <div style="display:flex; justify-content:center; margin-top:10px;">
+            <a class="buttonClass" onclick="resetGame()">☠️다시하기☠️</a>
+        </div>
+    </div>
+
+    <div id="endPageTime" style="display:none;">
+        <h1>💀 Time Over 💀</h1>
+        <img src="img/timeover.png" style="width:600px; object-fit:cover;">
+        <br>
+        <div style="display:flex; justify-content:center; margin-top:10px;">
+            <a class="buttonClass" onclick="resetGame()">☠️다시하기☠️</a>
+        </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------- -->
+
+    <script>
+        function gameOver2() {   //유저 버튼 클릭.
+            clearInterval(timerId);
+            document.getElementById("gamePage1").style.display = "none";
+            document.getElementById("gamePage2").style.display = "none";
+            document.getElementById("gamePage3").style.display = "none";
+            document.getElementById("timerDisplay").style.display = "none";
+            document.getElementById("inventory").style.display = "none";
+            document.getElementById("endPage2").style.display = "block";
+
+            alert("🐹햄스터가 🖐🏻당신의 손에 닿아 \n간지러워 웃다가 😼고양이에게 들켰습니다!\n\n🍽️고양이의 저녁밥이 되었습니다!🍗");
+        }
+    </script>
+
+    <div id="endPage2" style="display:none;">
+        <h1>💀 Game Over 💀</h1>
+        <img src="img/end2.png" style="width:600px; object-fit:cover;">
+        <br>
+        <div style="display:flex; justify-content:center; margin-top:10px;">
+            <a class="buttonClass" onclick="resetGame()">☠️다시하기☠️</a>
+        </div>
+    </div>
+
+    <!-- ------------------------------------------------------------------- -->
+
+    <script>
+       function gameOver3() {
+
+    clearInterval(timerId);
+
+    document.getElementById("gamePage1").style.display = "none";
+    document.getElementById("gamePage2").style.display = "none";
+    document.getElementById("gamePage3").style.display = "none";
+    document.getElementById("timerDisplay").style.display = "none";
+    document.getElementById("inventory").style.display = "none";
+
+    document.getElementById("endPage3").style.display = "block";
+
+    alert("😼실수로 고양이를 건드렸습니다. 🫱🏻당신은 잡혔습니다!\n\n🍽️고양이의 저녁밥이 되었습니다!🍗");
+}
+
+    </script>
+
+    <div id="endPage3" style="display:none;">
+        <h1>💀 Game Over 💀</h1>
+        <img src="img/end3.png" style="width:600px; object-fit:cover;">
+        <br>
+        <div style="display:flex; justify-content:center; margin-top:10px;">
+            <a class="buttonClass" onclick="resetGame()">☠️다시하기☠️</a>
+        </div>
+    </div>
+
+
+
+
+    
+    <!-- ------------------------------------------------------------------- -->
+
+    <script>
+        function gameOver4() {   //리모콘 버튼 클릭.
+            clearInterval(timerId);
+            document.getElementById("gamePage1").style.display = "none";
+            document.getElementById("gamePage2").style.display = "none";
+            document.getElementById("gamePage3").style.display = "none";
+            document.getElementById("timerDisplay").style.display = "none";
+            document.getElementById("inventory").style.display = "none";
+            document.getElementById("endPage4").style.display = "block";
+
+            alert("리모콘이 신기해서 눌러보다가 📺TV를 켜버렸습니다. \n🙀고양이가 놀래서 달려옵니다.\n\n🍽️고양이의 저녁밥이 되었습니다!🍗");
+        }
+    </script>
+
+    <div id="endPage4" style="display:none;">
+        <h1>💀 Game Over 💀</h1>
+        <img src="img/end4.png" style="width:600px; object-fit:cover;">
+        <br>
+        <div style="display:flex; justify-content:center; margin-top:10px;">
+            <a class="buttonClass" onclick="resetGame()">☠️다시하기☠️</a>
+        </div>
+    </div>
+
+
+
+
+
+    <div id="endPageSofa" style="display:none;">
+    <h1>💀 숨는 건 답이 아니었다 💀</h1>
+    <img src="img/end5.png" style="width:600px; object-fit:cover;">
+    <br>
+    <div style="display:flex; justify-content:center; margin-top:10px;">
+        <a class="buttonClass" onclick="resetGame()">☠️다시하기☠️</a>
+    </div>
+    </div>
+
+
+
+
+
+
+
+
+
+
+    <!-- --------------- 팝업 버튼 ------------------------------------------------------------------ -->
+    <script>
+        let livingPop = null;
+        let isSofaMode = false; 
+        
+        function openPopup1() {
+
+            const width = 700;
+            const height = 480;
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup1.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+
+        function openPopup2() {
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup2.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup3() {
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup3.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup4() {
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup4.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup5() {
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup5.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup6() {
+
+            const width = 700;
+            const height = 480;
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup6.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup7() {
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup7.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup8() {
+
+            alert("🔎쥐구멍의 흔적을 발견했습니다! 잘하면 나갈수 있어보여요");
+
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+                "popup.html?img=popup8.png",
+                "livingPop",
+                option
+            );
+        }
+    </script>
+
+    <script>
+        function openPopup9() {
+
+            alert("🔎숨을곳을 찾았어요! 여기서 계속 숨어야겠어요!");
+
+            isSofaMode = true;
+
+            const width = 700;
+            const height = 480;
+
+
+            const left = (screen.availWidth - width) / 2;
+            const top = (screen.availHeight - height) / 2;
+
+            const option = `width=${width},height=${height},left=${left},top=${top}`;
+
+            livingPop = window.open(
+            "popup.html?img=popup9.png&mode=sofa",
+            "livingPop",
+        option
+            );
+        }
+    </script>
+
+
+
+<div id="winPage" style="display:none;">
+    <h1>🎉 탈출 성공! 🎉</h1>
+
+    <img src="img/win.png" style="width:600px; object-fit:cover;">
+
+    <br>
+    <div style="display:flex; justify-content:center; margin-top:10px;">
+        <a class="buttonClass" onclick="resetGame()">🐹다시하기🐹</a>
+    </div>
+
+</div>
+
+    <!-- --------------------------------------------------------------------------------- -->
+
+    <script> // 문 이동 함수들
+        function btndoor1() {    // 문 버튼 거실->창고
+            document.getElementById("gamePage1").style.display = "none";
+            document.getElementById("gamePage2").style.display = "block";
+        }
+        function btndoor2() { // 문 버튼 창고->거실
+            document.getElementById("gamePage2").style.display = "none";
+            document.getElementById("gamePage1").style.display = "block";
+        }
+        function btndoor3() { // 문 버튼 거실->주방
+            document.getElementById("gamePage1").style.display = "none";
+            document.getElementById("gamePage3").style.display = "block";
+        }
+        function btndoor4() { // 문 버튼 주방->거실
+            document.getElementById("gamePage3").style.display = "none";
+            document.getElementById("gamePage1").style.display = "block";
+        }
+
+
+        function resetGame() { /* 다시하기 */
+            clearInterval(timerId);
+            hasScissors = false;
+            document.getElementById("slot1").style.backgroundImage = "none";
+            document.getElementById("slot2").style.backgroundImage = "none";
+            document.getElementById("slot3").style.backgroundImage = "none";
+
+            document.getElementById("endPage1").style.display = "none";
+            document.getElementById("endPage2").style.display = "none";
+            document.getElementById("endPage3").style.display = "none";
+            document.getElementById("endPage4").style.display = "none";
+            document.getElementById("winPage").style.display = "none";
+
+            document.getElementById("endPageTime").style.display = "none";
+
+            document.getElementById("gamePage1").style.display = "none";
+            document.getElementById("gamePage2").style.display = "none";
+            document.getElementById("gamePage3").style.display = "none";
+
+
+            document.getElementById("timerDisplay").style.display = "none";
+            document.getElementById("inventory").style.display = "none";
+
+            document.querySelector(".wrap").style.display = "block";
+
+            isSofaMode = false;
+            document.getElementById("endPageSofa").style.display = "none";
+        }
+    </script>
+
+
+</body>
+
+</html>
