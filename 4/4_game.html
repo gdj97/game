@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooting Game</title>
+    <style>
+
+    body {
+        margin: 0;
+        background: radial-gradient(circle at center, #111 0%, #000 80%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+    }
+
+    /* 전체 기계 */
+    .arcade {
+        width: 600px;
+        background: linear-gradient(180deg, #222, #111);
+        border-radius: 20px;
+        box-shadow: 0 0 40px #00ffff;
+        padding: 20px;
+        position: relative;
+    }
+
+    /* 상단 간판 */
+    .marquee {
+        text-align: center;
+        font-size: 30px;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        font-weight: bold;
+        color: #00ffff;
+        margin-bottom: 15px;
+        text-shadow: 0 0 10px #00ffff,
+                0 0 20px #0077ff;
+        letter-spacing: 3px;
+    }
+
+    /* 화면 영역 */
+    .screen {
+        background: black;
+        padding: 15px;
+        border-radius: 15px;
+        box-shadow: inset 0 0 40px #00ffff;
+    }
+
+    /* CRT 느낌 */
+    .screen::after {
+        content: "";
+        position: absolute;
+        top: 100px;
+        left: 35px;
+        width: 530px;
+        height: 640px;
+        pointer-events: none;
+        background: repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.05) 0px,
+            rgba(255,255,255,0.05) 1px,
+            transparent 2px,
+            transparent 4px
+        );
+    }
+
+    /* 캔버스 */
+    canvas {
+        display: block;
+        margin: 0 auto;
+        border-radius: 10px;
+    }
+
+    /* 하단 조작부 */
+    .controls {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* 조이스틱 */
+    .joystick {
+        width: 50px;
+        height: 50px;
+        background: red;
+        border-radius: 50%;
+        box-shadow: 0 5px 0 #880000;
+    }
+
+    /* 버튼 */
+    .buttons {
+        display: flex;
+        gap: 15px;
+    }
+
+    .btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        box-shadow: 0 5px 0 #333;
+    }
+
+    .red {
+        background: #ff004c;
+    }
+
+    .blue {
+        background: #00aaff;
+    }
+    </style>
+</head>
+<body>
+
+<div class="arcade">
+    <div class="marquee">🚀 SPACE BATTLE 🚀</div>
+
+    <div class="screen">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="joystick"></div>
+        <div class="buttons">
+            <div class="btn red"></div>
+            <div class="btn blue"></div>
+        </div>
+    </div>
+</div>
+
+<script src="4_game.js"></script>  <!-- 반드시 맨 아래 -->
+
+</body>
+</html>
