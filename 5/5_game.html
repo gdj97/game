@@ -327,9 +327,7 @@
             if (isMoving) {
                 return;
             }
-
             isMoving = true;
-            
             if(player.y <= 0) {
                 document.querySelector("#system_notification").innerHTML = "차가운 벽이 가로막고 있습니다."
                 isMoving = false;
@@ -791,12 +789,12 @@
                 }   // 무한 힐 방지.
 
                 sysLog.innerHTML += "[회복] 꿀꺽꿀꺽... 포션을 들이켰다.<br>";
-                sysLog.innerHTML += "체력이 " + player.potionPower + "만큼 회복되었다!<br>(남은 포션 : " + player.potion + "/" + player.maxPotion + ")";
+                sysLog.innerHTML += "체력이 " + player.potionPower + "만큼 회복되었다!<br>(남은 포션 : " + player.potion + "/" + player.maxPotion + ")<br>";
                 if (currentMonster !== null) {
                     updateCombatLog();
                 }
             } else {
-                sysLog.innerHTML += "싸늘하다... 허리춤에 감촉이 느껴지지 않는다...<br>ㅈ됐다... 포션이 없다...";
+                sysLog.innerHTML += "<br>싸늘하다... 허리춤에 감촉이 느껴지지 않는다...<br>포션이 없다...";
             }
         });
         
