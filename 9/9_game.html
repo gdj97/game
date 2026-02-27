@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>탄막</title>
+<style>
+    /* 1. 기본 설정 및 레이아웃 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+        background-color: #121214;
+        color: #e0e0e0; 
+        font-family: 'sans-serif';
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    #main { display: flex; align-items: flex-start; font-family: sans-serif; }
+    #gamezone {
+        width: 710px; height: 710px;
+        position: relative;
+        background: black;
+        background-size: 50px 50px;
+        overflow: hidden;
+        border: 2px solid #444; 
+        border-radius: 10px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.7);
+    }
+    #player {
+        width: 20px; height: 20px;
+        background: rgb(253, 252, 252);
+        position: absolute;
+        top: 345px; 
+        left: 345px;
+        z-index: 10;
+        transform: rotate(45deg);
+        box-shadow: 0 0 20px cyan;
+    }
+    #pos { 
+        position: absolute; 
+        bottom: 10px; 
+        right: 10px; 
+        color: #878686; 
+        font-size: 10px; 
+        scale: 0.7; 
+        opacity: 0.3; 
+    }
+
+    @keyframes fadeInBullet { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOutBullet { from { opacity: 1; } to { opacity: 0; } }
+    .bullet {
+        position: absolute;
+        color: yellow;
+        opacity: 0;
+        animation: fadeInBullet 0.5s ease-out forwards;
+        box-shadow: 0 0 30px 3px yellow;
+    }
+    .bullet.out { animation: fadeOutBullet 1s ease-out forwards; }
+
+    .item {
+        background: transparent;  
+        box-shadow: none;  
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9;  
+    }
+    .item-heal { color: #ff4d4d; text-shadow: 0 0 10px #ff4d4d; }
+    .item-boost { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
+
+    #life { 
+        position: absolute; top: 15px; left: 20px; 
+        text-shadow: 0 0 8px red; z-index: 9; 
+    }
+    #score { 
+        position: absolute; top: 15px; right: 20px; 
+        text-align: right; color: #00ffcc; z-index: 9; font-weight: bold; 
+    }
+    #gauge-container {
+        position: absolute;
+        top: 45px; left: 20px;
+        width: 120px ; height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    #gauge-bar { 
+        height: 100%; 
+        border-radius: 10px;
+        box-shadow: 0 0 8px currentColor;
+        background: cyan; 
+    }
+
+    #start-msg {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center; z-index: 20; 
+        background: rgba(0, 0, 0, 0.8);
+        padding: 30px; border-radius: 15px;
+        border: 1px solid cyan; box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    }
+    #start-msg h1 { margin-bottom: 15px; color: #fff; text-shadow: 0 0 10px cyan; }
+    #start-msg p { font-size: 14px; color: #888; }
+
+    .msg-box { position: absolute; }
+
+    #sub { 
+        width: 220px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #333;
+        border-radius: 10px;
+    }
+    #sub h3 { margin: 10px; color: #888; font-size: 14px; }
+    #scoreboard {
+        width: 100%; height: 350px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #222;
+        padding: 10px;
+        overflow-y: auto;
+        list-style-position: inside;
+        font-size: 12px;
+        color: #bbb;
+        border-radius: 5px;
+    }
+    #scoreboard li { padding: 4px 0; border-bottom: 1px dashed #333; }
+
+    #best-score { 
+        margin-top: 15px; padding-top: 10px;
+        border-top: 1px solid #444;
+        color: #ff00cc; font-weight: bold; 
+    } 
+    /* 스크롤바 커스텀 */
+    #scoreboard::-webkit-scrollbar { width: 8px; }
+    #scoreboard::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+    #scoreboard::-webkit-scrollbar-thumb { 
+        background: #444; 
+        border-radius: 10px; 
+        border: 2px solid rgba(0, 0, 0, 0); 
+        background-clip: padding-box; 
+    }
+    #scoreboard::-webkit-scrollbar-thumb:hover { background: cyan; box-shadow: 0 0 10px cyan; }
+</style>
+</head>
+<body>
+    <div id="main">
+        <div id="gamezone">
+            <div id="start-msg">
+                <h1>탄막</h1>
+                <p>Space: 시작 | R: 리셋 | 방향키: 이동 <br><br>Shift : 특수능력</p>
+            </div>
+            <div id="player"></div>
+            <p id="life" style="color:red; font-size: 20px;">♥♥♥♥♥♥</p>
+            <div id="gauge-container">
+                <div id="gauge-bar"></div>
+            </div>
+            <p id="score" style="color: white;">점수 : 0<br>스테이지 : 1</p>
+            <div id="pos"></div>
+        </div>
+        <div id="sub">
+            <h3>점수판</h3>
+            <div id="scoreboard"><ol></ol></div>
+            <div id="best-score">최고점수 : 0</div>
+        </div>
+    </div>
+    <script>
+        const player = document.querySelector("#player");
+        const gamezone = document.querySelector("#gamezone");
+        const p_limit = 710;
+        const playerSize = 20;
+        let pPos = (p_limit-playerSize)/2
+        let x = pPos, y = pPos;
+        let life = 6;
+        let isLock = false;  // 게임 상태 제어
+        let isInvin = false; // 무적 상태 제어
+        let MovingObjs = [];
+        let currentLevel = 0;
+        let game, startTime, score, viewScore;
+        let scoreArr = [];
+        let spawnTimers = []; // 타이머 일괄 관리를 위한 배열
+        const bulletSize = 6;
+        
+        // 특수능력 변수
+        let timeScale = 1; // 기본 배속
+        let gauge = 100;           
+        const maxGauge = 100;      
+        const consumeRate = 0.5;     
+        const recoverRate = 0.2;
+        let isCooldown = false;
+
+        // 키 상태 관리 객체 (부드러운 이동, 대각 이동) 키,값 쌍
+        let keys = {};
+        // 누른 키 true로 함
+        window.onkeydown = (e) => {
+            keys[e.keyCode] = true;
+            if (e.keyCode == 32 && !isLock) startgame(); // 게임이 실행중이 아닐때만 실행
+            if (e.keyCode == 82) reset();
+            if (e.keyCode == 68) forceEnd();
+        };
+        // 뗀 키 false로 함
+        window.onkeyup = (e) => { keys[e.keyCode] = false; }
+
+        // 이동 로직 (setInterval에서 호출)
+        function updatePlayer() {
+            const speed = 5 * timeScale;
+            if (keys[37] && x > 0) x -= speed;                      //좌
+            if (keys[39] && x < (p_limit - playerSize)) x += speed; //우
+            if (keys[38] && y > 0) y -= speed;                      //상
+            if (keys[40] && y < (p_limit - playerSize)) y += speed; //하
+
+            if (keys[16] && gauge > 0 && !isCooldown) {             //Shift
+                timeScale = 0.3
+                gauge -= consumeRate;
+                if(gauge < 0) {
+                    gauge = 0; // 0 이하 감소 방지
+                    isCooldown = true; // 게이지 소진시 쿨다운 적용
+                }
+                gamezone.style.background = "#112233"
+            } else {
+                timeScale = 1;
+                if (gauge < maxGauge) {
+                    gauge += recoverRate;
+                    if(gauge >= 30 && isCooldown) { // 30 이상 회복시 쿨다운 해제
+                        isCooldown = false;
+                    }
+                    if(gauge > maxGauge) gauge = maxGauge; // 최대값 이상 증가 방지
+                }
+                gamezone.style.background = "black"
+            }
+            document.querySelector("#gauge-bar").style.width = gauge + "%";
+            document.querySelector("#gauge-bar").style.background = isCooldown ? "red" : "cyan";
+
+            // 좌표 값 전달
+            player.style.left = x + "px";
+            player.style.top = y + "px";
+            // 좌표 그리기
+            document.querySelector("#pos").innerHTML = `${Math.round(x)}, ${Math.round(y)}`;
+        }
+        // 기존 랜덤 좌표, 속도
+        function nextRandomInteger(limit) { return Math.round(Math.random() * limit); }
+        function randomSpeed(max) { return (Math.random() - 0.5) * max; }
+
+        function MovingObj(fixedX, fixedY, vX, vY, isPattern = false) {
+            this.isDead = false;
+            this.isWaiting = true;
+            this.isPattern = isPattern;
+            this.spawnTime = Date.now();
+            this.kind = -1;
+
+            // 매개변수 미정의시 기본값(랜덤) 지정
+            this.x = (fixedX !== undefined) ? fixedX : nextRandomInteger(p_limit - 15);
+            this.y = (fixedY !== undefined) ? fixedY : nextRandomInteger(p_limit - 15);
+            this.vX = (vX !== undefined) ? vX : randomSpeed(6);
+            this.vY = (vY !== undefined) ? vY : randomSpeed(6);
+
+            this.body = document.createElement("div");
+            this.body.innerHTML = '●';
+            // this.body.className = "bullet"; 
+            this.body.classList.add("bullet");
+            this.body.style.fontSize = bulletSize + "px";
+            this.body.style.width = bulletSize + "px";
+            this.body.style.height = bulletSize + "px";
+            this.body.style.left = this.x + "px";
+            this.body.style.top = this.y + "px";
+            if (this.isPattern) {
+                this.body.style.color = "red";  
+            }
+            gamezone.appendChild(this.body);
+
+            // 생성 후 대기
+            let timeoutId = setTimeout(() => {
+            this.isWaiting = false;
+            }, 1000);
+            spawnTimers.push(timeoutId);
+        }
+
+        MovingObj.prototype.move = function() {
+            if (!this.body) return;
+            this.x += this.vX * timeScale;
+            this.y += this.vY * timeScale;
+            this.body.style.left = this.x + "px";
+            this.body.style.top = this.y + "px";
+
+            // 패턴 탄환은 경계 초과시 삭제 
+            if (this.isPattern) {
+                if (this.x < -20 || this.x > p_limit+20 || this.y < -20 || this.y > p_limit+20) {
+                    this.remove();
+                    return;
+                }
+            } else {
+                // 일반 탄환의 튕기기 판정
+                if (this.x <= 0 || this.x >= p_limit - bulletSize) this.vX *= -1;
+                if (this.y <= 0 || this.y >= p_limit - bulletSize) this.vY *= -1;
+                // 시한부삭제
+                if (Date.now() - this.spawnTime > 20000) this.remove();
+            }
+        };
+
+        // 삭제 로직
+        MovingObj.prototype.remove = function() {
+            if (this.isDead) return;
+            this.isDead = true;
+
+            //fadeout을 위한 클래스 추가
+            this.body.classList.add('out');
+            //fadeout을 위한 대기 시간 이후 삭제
+            setTimeout(() => {
+                if (this.body) {
+                    this.body.remove();
+                    // 배열에서 제거
+                    const idx = MovingObjs.indexOf(this);
+                    if (idx > -1) MovingObjs.splice(idx, 1);
+                }
+                this.body = null; // 메모리 관리
+            }, 1000);
+        };
+
+        function startgame() {
+            isLock = true;
+            document.querySelector("#start-msg").style.display = "none";
+            startTime = Date.now();
+            setInvin();
+            bulletSpawn();
+            spawnRainPattern(1);
+            game = setInterval(function() {
+                updatePlayer(); // 매 프레임 플레이어 위치 업데이트
+                
+                score = Date.now() - startTime; // 현재시간-시작시간으로 점수 산정
+                viewScore = Math.round(score / 100);
+                document.querySelector("#score").innerHTML = `점수 : ${viewScore}<br> 스테이지 : ${1+currentLevel}`;
+
+                // 3초당 레벨 상승
+                let levelchk = Math.floor(score / 3000);
+                if (levelchk > currentLevel) {
+                    currentLevel = levelchk;
+
+                    // 탄환 생성
+                    if (currentLevel % 5 == 0) spawnCirclePattern(currentLevel*1);
+                    else if (currentLevel % 2 == 0) spawnSpreadPattern(currentLevel*3);
+                    else bulletSpawn();
+
+                    if (currentLevel % 2 == 0) { itemSpawn(Math.floor(Math.random()*2)) }
+
+                    // 무작위 방향 패턴 생성. 1~9 중 1~4만 생성(40%)
+                    let dice = Math.floor(Math.random() * 10) + 1;
+                    spawnRainPattern(dice);  
+                    
+                }
+                
+                for (let i = MovingObjs.length - 1; i >= 0; i--) {
+                    let b = MovingObjs[i];
+                    b.move();
+                    if (!isInvin && !b.isWaiting && hit(b)) {
+                        if (b.kind == 0) {
+                            life += 2; 
+                            b.remove();
+                        } else if (b.kind == 1) {
+                            life++;
+                            let boost = setInterval(()=>{
+                                gauge = 100;
+                                isCooldown = false;
+                                document.querySelector("#gauge-bar").style.background = "gold";
+                            },1000/60)
+
+                            spawnTimers.push(boost);
+
+                            let release = setTimeout(()=>{
+                                document.querySelector("#gauge-bar").style.background = "cyan";
+                                clearInterval(boost)
+                            },2000)
+                            b.remove();
+                            spawnTimers.push(release);
+                        }
+                        life--;
+                        lifeView();
+                        setInvin();
+                        if (life <= 0) gameEnd();
+                    }
+                }
+            }, 1000/60);
+        }
+        // 경고이미지 생성함수
+        function Msgbox(x,y,msg) {
+            this.body = document.createElement("div");
+            this.body.className = "msg-box";
+            this.body.style.left = x+"px"
+            this.body.style.top = y+"px"
+            this.body.innerHTML = msg;
+            gamezone.appendChild(this.body);
+            let timeoutId = setTimeout(() => {
+                this.body.remove()
+            }, 500);
+            spawnTimers.push(timeoutId);
+        }
+        function itemSpawn(num) {
+            // 좀 더 안쪽에 생성
+            let ix = nextRandomInteger(p_limit - 25)
+            let iy = nextRandomInteger(p_limit - 25)
+            let item = new MovingObj(ix, iy, 0, 0);
+            item.kind = num;
+            item.body.classList.add('item');
+            if (item.kind == 0) {
+                item.body.innerHTML = '♥';
+                item.body.classList.add('item-heal');
+            } else {
+                item.body.innerHTML = '⚡';
+                item.body.classList.add('item-boost');
+            }
+            item.body.style.fontSize = '20px';
+            item.body.style.textShadow = "0 0 10px white";
+
+            MovingObjs.push(item);
+
+            let timeoutId = setTimeout(() => {
+                if (!item.isDead) item.remove();
+            }, 5000);
+            spawnTimers.push(timeoutId);
+        }
+        function bulletSpawn() {
+            let count = 0;
+            // 200밀리초당 한개씩 5개 생성
+            let spawnTimer = setInterval(() => {
+                if(!isLock) { clearInterval(spawnTimer); return; } //게임이 실행중이 아니면 바로 리턴
+                MovingObjs.push(new MovingObj());
+                count++;
+                if (count >= currentLevel) clearInterval(spawnTimer); // 레벨에 비례한 탄환 수 생성
+            }, 200);
+            spawnTimers.push(spawnTimer);
+        }
+        // startgame()에서 랜덤 숫자로 호출. 1~4로 방향 지정
+        function spawnRainPattern(d) {
+            if(d > 4) return;
+            let num = 0;
+            let rx = 0;
+            let ry = 0;
+            let vX = 0;
+            let vY = 0;
+
+            if (d == 1) { ry = -10, vY = 5; }       //상
+            else if (d == 2) { ry = 720; vY = -5; } //하
+            else if (d == 3) { rx = -10, vX = 5; }  //좌
+            else if (d == 4) { rx = 720, vX = -5; } //우
+
+            let spawnTimer = setInterval(()=> {
+                MovingObjs.push(new MovingObj(rx,ry,vX,vY,true))
+                num++;
+                if (d == 1 || d == 2) { rx += 50;}
+                else if(d == 3 || d == 4 ){ ry += 50;}
+                if(num > 14) clearInterval(spawnTimer);
+            },100);
+            spawnTimers.push(spawnTimer);
+        }
+
+        function spawnCirclePattern(count) { // 원형탄환
+            // 시작 위치 랜덤
+            const cx = nextRandomInteger(p_limit - 20);
+            const cy = nextRandomInteger(p_limit - 20);
+            let speed = 3;
+            // 경고 이미지 출력
+            new Msgbox(cx,cy,"⚠️")
+            let timeoutId = setTimeout(() =>{
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i; // 360도를 탄환 갯수만큼 나눠서 각도 설정
+                    // 삼각 함수 이용 대각이동 구현
+                    const vX = Math.cos(angle) * speed;
+                    const vY = Math.sin(angle) * speed;
+                    MovingObjs.push(new MovingObj(cx, cy, vX, vY, true));
+                }
+            },1000)
+            spawnTimers.push(timeoutId);
+        }
+        function spawnSpreadPattern(count) { // 방사탄환
+            const sx = nextRandomInteger(p_limit - 20);
+            const sy = nextRandomInteger(p_limit - 20);
+            let speed = 3;
+            let i = 0;
+            let circleTimer = setInterval(function() {
+                if (!isLock) { clearInterval(circleTimer); return; } //게임이 실행중이 아니면 바로 리턴
+                const angle = (Math.PI * 2 / count) * i;
+                const vX = Math.cos(angle) * speed;
+                const vY = Math.sin(angle) * speed;
+                MovingObjs.push(new MovingObj(sx, sy, vX, vY, true));
+                i++;
+                if (i >= count) {
+                    clearInterval(circleTimer);
+                }
+            },50);
+            spawnTimers.push(circleTimer);
+        }
+        // 무적 시간 함수
+        function setInvin() {
+            isInvin = true;
+            // 깜빡임 부여
+            let cnt = 0;
+            let blink = setInterval(() => {
+                player.style.opacity = (cnt % 2 == 0) ? "0.1" : "0.7";
+                cnt++;
+            }, 100);
+            let timeoutId = setTimeout(() => {
+                clearInterval(blink);
+                isInvin = false;
+                player.style.opacity = "1";
+            }, 1000);
+            spawnTimers.push(timeoutId);
+        }
+        // 피격 로직
+        function hit(b) {
+            // 플레이어 중심점
+            const px = x + playerSize / 2;
+            const py = y + playerSize / 2;
+            // 탄환 중심점
+            const bx = b.x + bulletSize / 2;
+            const by = b.y + bulletSize / 2;
+
+            // 두 중심점 사이의 거리. 삼각형의 빗변
+            const dist = Math.sqrt((px - bx)**2 + (py - by)**2);
+            // 두 중심점 사이의 거리가 (플레이어 반지름 + 탄환 반지름)보다 작으면 충돌 
+            return dist < (playerSize / 2 - 3) + (bulletSize / 2);
+        }
+        // 체력 갱신
+        function lifeView() {
+            let hearts = "";
+            for(let i=0; i<life; i++) hearts += "♥";
+            document.querySelector("#life").innerHTML = hearts;
+        }
+        // 게임 종료
+        function gameEnd() {
+            addScore();
+            alert(`게임 오버! \n최종 점수: ${viewScore}\n스테이지 : ${currentLevel+1}`);
+            reset();
+        }
+
+        function reset() {
+            clearInterval(game);
+            //남아있는 모든 타이머 제거
+            spawnTimers.forEach(timerId => {
+                clearInterval(timerId);
+                clearTimeout(timerId);
+            });
+            spawnTimers = [];
+            isLock = false;
+            document.querySelector("#start-msg").style.display = "block";
+            // 모든 탄환 제거
+            [...MovingObjs].forEach(b => b.remove()); // Spread Operator
+            MovingObjs = []; // 배열 비우기
+            x = 345; y = 345;
+            life = 6;
+            currentLevel = 0;
+            gauge = 100;
+            isCooldown = false;
+            document.querySelector("#score").innerHTML = `점수 : 0<br> 스테이지 : 1`;
+            document.querySelector("#life").innerHTML = "♥♥♥♥♥♥";
+            player.style.left = "345px";
+            player.style.top = "345px";
+            keys = {};
+        }
+        // 점수 기록
+        function addScore() {
+            scoreArr.push(viewScore); // 배열에 추가
+            scoreArr.sort((a, b) => b - a); // 내림차순 정렬
+            document.querySelector("#scoreboard ol").innerHTML += `<li>점수 : ${viewScore}, 스테이지 : ${currentLevel+1}</li>`;
+            document.querySelector("#best-score").innerHTML = `최고점수 : ${scoreArr[0]}`;
+            let board = document.querySelector("#scoreboard");
+            board.scrollTop = board.scrollHeight; // 자동 스크롤
+        }
+        // 테스트용 강제종료 버튼
+        function forceEnd() { if(isLock) gameEnd(); }
+    </script>
+</body>
+</html>

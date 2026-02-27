@@ -351,7 +351,7 @@ function startGame() {
   promptIndex = 0;
   updatePromptBoxes();
   updateProgress();
-  spawnChars();
+  createChars();
   startTimer();
 }
 
@@ -429,7 +429,7 @@ function getCharPool() {
   return pool.slice(0, 10);
 }
 
-function spawnChars() {
+function createChars() {
   const field = document.getElementById('game-field');
   field.innerHTML = '';
   floatingChars   = [];
@@ -451,7 +451,7 @@ function spawnChars() {
     el.style.left = x + 'px';
     el.style.top  = y + 'px';
 
-    const charData = { el, ch, x, y, vx, vy, wrongTimeout: null };
+    const charData = { el, ch, x, y, vx, vy, wrongTimeout: null, originalJp: ch.jp };
     el.addEventListener('click', () => onCharClick(charData));
     field.appendChild(el);
     floatingChars.push(charData);
@@ -508,11 +508,10 @@ function onCharClick(charData) {
     if (charData.wrongTimeout) clearTimeout(charData.wrongTimeout);
     charData.el.classList.add('wrong');
     const origEl  = charData.el.querySelector('.jp');
-    const savedJp = origEl.textContent;
     origEl.textContent = '✗';
     charData.wrongTimeout = setTimeout(() => {
       charData.el.classList.remove('wrong');
-      origEl.textContent = savedJp;
+      origEl.textContent = charData.originalJp;
     }, 1000);
 
     if (timerVal <= 0) {
