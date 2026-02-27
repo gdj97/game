@@ -1,0 +1,232 @@
+/* 1. 웹 폰트 불러오기 (픽셀 폰트 & 서사 영역용 명조체) */
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap');
+@font-face {
+    font-family: 'DungGeunMo';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 2. 전체 뼈대 및 배경 (먹물색 기반의 다크 판타지) */
+body {
+    /* 짙은 회색 바탕에 거친 돌벽 질감을 주기 위한 설정 */
+    background-color: #1a1a1a; 
+    
+    background-image: url('./dungeon_landscape.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center center;
+    background-attachment: fixed;
+
+    color: #e0e0e0;
+    font-family: 'DungGeunMo', monospace;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column; /* 세로 정렬 */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    
+    /* 화면이 커져도 중앙으로 시선이 모이도록 비네팅(Vignette) 효과 추가 */
+    box-shadow: inset 0 0 150px rgba(0,0,0,0.8);
+}
+
+/* 모바일 앱/게임 화면처럼 중앙에 고정된 프레임 */
+#create_box, #game_screen {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    background-color: #0a0a0a;
+    border: 2px solid #bda05e; /* 바랜 금박 테두리 */
+    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 0 30px rgba(189, 160, 94, 0.15); /* 은은한 금빛 광채 */
+}
+
+/* 3. 메인 뷰포트 (서사 & 미래 이미지 영역) */
+#system_notification {
+    font-family: 'Nanum Myeongjo', serif; /* 웹소설 감성의 명조체 */
+    line-height: 1.8;
+    font-size: 16px;
+    min-height: 250px; /* 훗날 API 이미지가 들어갈 고정 공간 */
+    max-height: 300px;
+    overflow-y: auto; /* 내용이 길어지면 스크롤 생성 */
+    background-color: #000;
+    border: 1px solid #333;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9); /* 깊이감 부여 */
+}
+
+/* 전투 로그도 명조체로 통일 */
+#combat_log, #voice_of_evilGod {
+    font-family: 'Nanum Myeongjo', serif;
+    line-height: 1.6;
+    margin-top: 10px;
+}
+
+.boss_attack {
+    color: #8a0303; /* 말라붙은 핏빛 */
+    font-weight: bold;
+}
+
+/* 4. 버튼 공통 디자인 (레트로 픽셀 감성) */
+button {
+    font-family: 'DungGeunMo', monospace;
+    font-size: 14px;
+    background-color: #1a1a1a;
+    color: #bda05e;
+    border: 2px solid #bda05e;
+    padding: 10px 15px;
+    margin: 5px 2px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #55482a; /* 고전 게임식 투박한 그림자 */
+    transition: all 0.1s;
+}
+
+button:active {
+    transform: translate(2px, 2px); /* 클릭 시 푹 눌리는 효과 */
+    box-shadow: 0px 0px 0px #55482a;
+}
+
+button:disabled {
+    background-color: #222;
+    color: #555;
+    border-color: #444;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none; /* 죽었을 땐 안 눌림 */
+}
+
+/* 이동(방향키) 버튼 전용 사이즈 */
+#btn_up, #btn_left, #btn_down, #btn_right {
+    width: 45px;
+    height: 45px;
+    font-size: 18px;
+    padding: 0;
+}
+
+/* 5. 각 시스템 창 디자인 (사이드 대시보드 레이아웃) */
+/* 공통 테마 적용 */
+#in_game_status, #inventory_window, #map_window {
+    position: absolute;
+    background-color: rgba(17, 17, 17, 0.95);
+    border: 2px solid #bda05e;
+    padding: 15px;
+    box-sizing: border-box;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+    z-index: 100;
+}
+
+/* ① 상태창 (메인 스크린 왼쪽 위) */
+#in_game_status {
+    top: 0;
+    right: calc(100% + 20px); /* 메인창의 왼쪽 바깥으로 20px 띄움 */
+    width: 280px;
+}
+
+/* ② 인벤토리 및 제단 (메인 스크린 왼쪽 아래) */
+#inventory_window {
+    top: 250px; /* 상태창 바로 아래에 오도록 높이 조절 */
+    right: calc(100% + 20px);
+    width: 280px;
+}
+
+/* ③ 미니맵 (메인 스크린 오른쪽, 살짝 아래로 길게) */
+#map_window {
+    top: 50px; /* 메인창 상단에서 살짝 내려온 위치 */
+    left: calc(100% + 20px); /* 메인창의 오른쪽 바깥으로 20px 띄움 */
+    width: 250px;
+    min-height: 250px; /* 아래로 길쭉하게 */
+}
+
+/* 전투 창은 중앙에 그대로 고정 */
+#combat_window {
+    background-color: #111;
+    border: 1px solid #bda05e;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+/* 악신의 제단 (주술적이고 불길한 느낌 강조) */
+#soul_altar_window {
+    background-color: #1a0505; /* 살짝 붉은빛이 도는 어둠 */
+    border: 3px double #8a0303; /* 핏빛 이중선 */
+    padding: 15px;
+    margin-top: 15px;
+}
+
+#soul_altar_window h4 {
+    color: #8a0303;
+    text-align: center;
+    margin-top: 0;
+}
+
+#soul_altar_window button {
+    width: 100%; /* 제단 버튼들은 가로로 꽉 차게 */
+    text-align: left;
+}
+
+/* 6. 입력 폼 (캐릭터 생성 창) */
+input, select {
+    font-family: 'DungGeunMo', monospace;
+    background-color: #111;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 8px;
+    margin-bottom: 10px;
+    width: calc(100% - 20px);
+}
+
+/* HP 바 뼈대 (빈 게이지) */
+.hp-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #222;
+    border: 1px solid #bda05e;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    position: relative;
+    box-shadow: inset 0px 0px 5px #000;
+}
+
+/* 깎이는 붉은 피 (채워진 게이지) */
+.hp-bar-fill {
+    height: 100%;
+    background-color: #8a0303;
+    transition: width 0.2s ease-out; /* 피가 부드럽게 깎이게 만듦 */
+}
+
+/* HP 숫자 텍스트 (게이지 중앙에 표시) */
+.hp-text {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #e0e0e0;
+    font-size: 13px;
+    line-height: 20px;
+    text-shadow: 1px 1px 2px #000;
+}
+
+/* 피격 시 화면 흔들림 + 붉은 섬광 이펙트 */
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.shake-active {
+    animation: shake 0.3s;
+    animation-iteration-count: 1;
+    box-shadow: inset 0 0 50px rgba(138, 3, 3, 0.8) !important; /* 화면 가장자리에 피 튀기는 느낌 */
+}

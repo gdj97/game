@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="status.css">
+</head>
+<body>
+    <div id="create_box">
+        <input id="name" placeholder="캐릭터의 이름을 정해주세요.">
+        <select id="job">
+            <option value="warrior">전사</option>
+            <option value="assassin">암살자</option>
+            <option value="archer">궁수</option>
+        </select>
+        <button id="selectJob">선택</button>
+        <div id="status_window"></div>
+        <button id="confirmed1" style="display : none;">확정</button>
+    </div>
+    <div id="game_screen" style="display : none;">
+        <div id="system_notification"></div>
+        <button id="btn_status">상태창 보기</button>
+        <div id="in_game_status" style="display : none;"></div>
+        <button id="btn_inventory">가방 열기</button>
+        <div id="inventory_window" style="display : none;">
+            <button id="btn_close_inv">가방 닫기</button><br>
+            <div id="inv_items"></div>
+            <hr><div id="inv_potion"></div>
+            <hr><div id="inv_gold"></div>
+            <hr><div id="inv_soul"></div>
+            <button id="btn_open_soul_altar">제단 열기</button>
+            <div id="soul_altar_window" style="display : none;">
+                <h4>제단에 영혼을 바치세요.<br>신께서 힘을 내려주실 겁니다.</h4>
+                <button id="btn_up_atk">힘의 축복(공격력 +1) (필요 소울 : 5)</button><br>
+                <button id="btn_up_def">인내의 축복(방어력 +1) (필요 소울 : 5)</button><br>
+                <button id="btn_up_maxhp">끈기의 축복(최대 체력 +5) (필요 소울 : 10)</button><br>
+                <button id="btn_up_atkspeed">기민의 축복(공격속도 -0.05) (필요 소울 : 30)</button><br>
+                <button id="btn_up_maxPotion">수량의 축복(포션 수량 +1) (필요 소울 : 50)</button><br>
+                <button id="btn_up_potionPower">압축의 축복(포션 회복량 +5) (필요 소울 : 50)</button><br>
+                <div id="voice_of_evilGod"></div>
+            </div>
+        </div><br>
+        <button id="btn_up">▲</button>
+        <button id="btn_left">◀</button>
+        <button id="btn_down">▼</button>
+        <button id="btn_right">▶</button><br>
+        <div id="combat">
+            <div id="combat_window" style="display : none;">
+                <h3>※ 전투 발생 ※</h3>
+            </div>
+            <div id="combat_log" style="margin-bottom: 10px;"></div>
+            <button id="btn_heal">포션 마시기</button>
+        </div>
+        <div id="map">
+            <div id="map_log"></div>
+            <button id="btn_map">미니맵 보기</button>
+            <div id="map_window" style="display : none;"></div>
+        </div>
+    </div>
+    <script>
+        let isMoving = false;
+
+        // 선택 가능 캐릭터 객체
+        const jobStats = {
+            "warrior" : {hp : 200, mp : 50, atk : 10, def : 15, atkspeed : 1500, dodge : 15},
+            "assassin" : {hp : 100, mp : 80, atk : 25, def : 5, atkspeed : 1000, dodge : 35},
+            "archer" : {hp : 150, mp : 60, atk : 15, def : 10, atkspeed : 1200, dodge : 25}
+        }
+
+        // 몬스터 객체 데이터베이스
+        const monsterDB = {
+            "skeleton" : {
+                name : "달그락거리는 스켈레톤",
+                hp : 60,
+                atk : 20,
+                def : 5,
+                soul : 2,
+                minGold : 5,
+                maxGold : 15,
+                atkspeed : 2500
+            },
+
+            "mimic" : {
+                name : "미믹",
+                hp : 70,
+                atk : 15,
+                def : 6,
+                soul : 5,
+                minGold : 40,
+                maxGold : 60,
+                atkspeed : 1700
+            }
+        }
+
+        const monsterDB_BOSS = {
+            "dullahan" : {
+                name : "듀라한",
+                hp : 450,
+                atk : 40,
+                def : 25,
+                atkspeed : 1500
+            }
+        }
+
+        /*
+            스페셜 몬스터로 빼두려고 했는데, 그건 나중에 하기로 하고, 일단 monsterDB에 합쳐두기로 함.
+        */
+        /*
+            soul은 경험치를 대체할 재화.
+            이 소울의 일정 수치를 소모해서 캐릭터의 스탯 중 일부를 증가시키려는 계획
+            훗날 '달그락거리는' 부분의 접두사를 따로 창조해서 몬스터의 파워를 랜덤으로 조절할 계획
+        */
+
+        // 생존자의 쪽지
+        const creepyNotes = [
+            "벽에 핏자국이 새겨져있다. 자세히 들여다 보니, 다음과 같은 글귀가 적혀있다. '상ㅈ... ㅈ심...'",
+            "바닥에 무언가에 다급히 긁힌 것 같은 흠이 옅게 새겨져있다. 자세히 보니, 손톱으로 새긴 것 같다.",
+            "구석에 바싹 말라있는 백골의 사체가 있다. 갑옷은 군데군데 뜯겨져 있으며, 백골의 상반신 일부는 사라져있다.",
+            "바닥의 쪽지를 주웠다. 내용은 다음과 같다. <br>'뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마 뒤돌지 마'"
+        ]
+
+        // 시험용 던전에서 얻을 수 있는 것들.
+        const itemDB = [
+            {name : "철검", type : "oneHandWeapon", atk : 10, desc : "공격력을 10 올려준다."},
+            {name : "가죽 갑옷", type : "armor", def : 5, desc : "방어력을 3 올려준다."},
+        ]
+        
+
+        // 설정한 캐릭터 상태창
+        let player;
+        document.getElementById("selectJob").addEventListener("click", function() {
+            let selectedName = document.getElementById("name").value;
+            let selectedJob = document.getElementById("job").value;
+            let stats = jobStats[selectedJob];
+            player = {
+            name : selectedName, 
+            job : selectedJob, 
+            hp : stats.hp,
+            maxhp : stats.hp,
+            mp : stats.mp,
+            maxmp : stats.mp,
+            atk : stats.atk,
+            def : stats.def,
+            atkspeed : stats.atkspeed,
+            dodge : stats.dodge,
+            floor : 1,
+            x : 1,
+            y : 4,
+            gold : 50,
+            soul : 0,
+            potion : 3, // 그래도 처음에 포션 세 개는 주자 ㅋ
+            maxPotion : 10,
+            potionPower : 20,
+            inventory : []
+        }
+
+        // 앞으로 전투마다 만날 새로운 적의 변수
+        let currentMonster = null;
+
+        /*
+            지금 inventory : ["초보자 체력 포션", "50G"]라고 썼다가 바꿔야 하는 사태가 발생함.
+            왜냐하면 전리품 얻는 과정에서 객체를 통째로 집어 넣어야 하는 사태가 발생했기 때문임.
+            나는 실제로 사용 가능한 아이템을 넣기 위해 인벤토리를 만들어야 함.
+            단순히 문자열을 집어 넣는 인벤토리가 아니라 객체를 집어 넣어서 착용이 가능한, 효능이 있는 아이템을 넣어야 하기 때문임.
+        */
+
+        // 캐릭터 상태창 띄우기
+        document.querySelector("#status_window").innerHTML = "이름 : " + player.name 
+        + "<br>직업 : " + player.job + "<br>체력 : " + player.hp + "<br>마력 : " + player.mp + "<br>공격력 : " + player.atk
+        + "<br>방어력 : " + player.def + "<br>공격속도 : " + player.atkspeed + "<br>회피율 : " + player.dodge;
+        document.querySelector("#confirmed1").style.display = "block";
+        })
+
+        // 확정과 함께 뜨는 인삿말
+        document.getElementById("confirmed1").addEventListener("click", function() {
+            document.getElementById("create_box").style.display = "none";
+            document.querySelector("#game_screen").style.display = "block";
+            document.querySelector("#system_notification").innerHTML = "미궁에 들어서신 것을 환영합니다, " + player.name + "님.<br>"
+            + "한 번 들어서신 이상, 던전 보스를 죽이거나<br>" + "죽기 전까지는 나가실 수 없습니다.<br>"
+            + "행운이 함께 하길 바랍니다."
+        })
+
+        // 상태창 여는 로직
+        document.querySelector("#btn_status").addEventListener("click", function() {
+            let statusDisplay = document.querySelector("#in_game_status");
+
+            if (statusDisplay.style.display == "block") {
+                statusDisplay.style.display = "none";
+                this.innerHTML = "상태창 보기";
+            } else {
+                // 창을 열 때마다 최신 스탯으로 업데이트해서 보여줌
+                statusDisplay.innerHTML = 
+                    "이름 : " + player.name +
+                    "<br>직업 : " + player.job +
+                    "<br>체력 : " + player.hp + "/" + player.maxhp +
+                    "<br>마력 : " + player.mp + "/" + player.maxmp +
+                    "<br>공격력 : " + player.atk +
+                    "<br>방어력 : " + player.def +
+                    "<br>공격속도 : " + player.atkspeed +
+                    "<br>회피율 : " + player.dodge;
+                statusDisplay.style.display = "block";
+                this.innerHTML = "상태창 닫기";
+            }
+        });
+
+        // 인벤토리 여는 버튼 로직
+        document.querySelector("#btn_inventory").addEventListener("click", function() {
+            document.querySelector("#inventory_window").style.display = "block";
+            updateInventoryUI();
+        })
+        /*
+            처음에 하드 코딩 했다가 아예 함수로 빼서 교체함.
+        */
+
+        // 인벤토리 닫는 버튼 로직
+        document.querySelector("#btn_close_inv").addEventListener("click", function() {
+            document.querySelector("#inventory_window").style.display = "none";
+        })
+
+        
+
+        // 제단 여는 버튼 로직
+        document.querySelector("#btn_open_soul_altar").addEventListener("click", function() {
+            let altarDisplay = document.querySelector("#soul_altar_window");
+
+            if (altarDisplay.style.display == "block") {
+                altarDisplay.style.display = "none";
+                this.innerHTML = "영혼의 제단 열기";
+            } else {
+                altarDisplay.style.display = "block";
+                this.innerHTML = "영혼의 제단 닫기";
+            }
+        });
+
+        // 영혼 강화 시스템
+        let ragecnt = 0;
+        let giftcnt = 0;
+        function upgradeStat(statType, cost) {
+            let sysLog = document.querySelector("#voice_of_evilGod");
+            
+            if (player.soul >= cost) {
+                player.soul -= cost;
+
+                if (statType == "atk") {
+                    player.atk += 1;
+                    sysLog.innerHTML += "알 수 없는 검은 기운이 근육에 스며드는 느낌이 든다...<br>공격력이 1 증가했습니다. (현재 공격력 : " + player.atk + ")<br>";
+                } else if (statType == "def") {
+                    player.def += 1;
+                    sysLog.innerHTML += "알 수 없는 검은 기운이 피부에 스며드는 느낌이 든다...<br>방어력이 1 증가했습니다. (현재 방어력 : " + player.def + ")<br>";
+                } else if (statType == "maxhp") {
+                    player.maxhp += 5;
+                    sysLog.innerHTML += "알 수 없는 검은 기운이 심장에 스며드는 느낌이 든다...<br>최대 체력이 5 증가했습니다. (현재 최대 체력 : " + player.maxhp + ")<br>";
+                } else if (statType == "atkspeed") {
+                    player.atkspeed -= 50;
+                    sysLog.innerHTML += "알 수 없는 검은 기운이 몸을 가볍게 하는 느낌이 든다...<br>공격 속도가 0.5초 빨라졌습니다. (현재 공격 속도 : " + (player.atkspeed / 1000) + "초)<br>";
+                } else if (statType == "maxPotion") {
+                    player.maxPotion += 1;
+                    sysLog.innerHTML += "알 수 없는 검은 기운이 허리춤의 포션 가방에 향한다...<br>최대 포션 수량이 1 증가했습니다. (현재 최대 포션 수량 : " + player.maxPotion + "개)<br>";
+                } else if (statType == "potionPower") {
+                    player.potionPower += 5;
+                    sysLog.innerHTML += "알 수 없는 검은 기운이 온 몸의 혈류로 들어오는 느낌이 든다...<br>포션 회복량이 5 증가했습니다. (현재 포션 회복량 : " + player.potionPower + ")<br>";
+                }
+                document.querySelector("#status_window").innerHTML = 
+                    "이름 : " + player.name +
+                    "<br>직업 : " + player.job +
+                    "<br>체력 : " + player.hp + "/" + player.maxhp +
+                    "<br>마력 : " + player.mp + "/" + player.maxmp +
+                    "<br>공격력 : " + player.atk +
+                    "<br>방어력 : " + player.def +
+                    "<br>공격속도 : " + player.atkspeed +
+                    "<br>회피율 : " + player.dodge;
+            } else {
+                sysLog.innerHTML += "기도를 올렸으나 악의가 느껴진다... 소울이 부족하기 때문일까...<br>"
+                ragecnt++;
+                if (ragecnt >= 10) { 
+                    player.hp -= 50;
+                    sysLog.innerHTML += "<b>제물 없는 기도에 악신이 분노했다!</b> (체력 50 감소)"
+                    ragecnt = 0;
+                    giftcnt++;
+                    // 할 일 - 현재 스테이터스 업데이트 (확인 창 아님)
+                    if (player.hp <= 0) {
+                        sysLog.innerHTML += "<br><b>눈앞이 깜깜해진다... 내 흔적도 결국 이곳에 쓸쓸히 묻히겠지...</b>";
+                        let allButtons = document.querySelectorAll("button");
+                        for (let i=0; i<allButtons.length; i++) {
+                            allButtons[i].disabled = true;
+                        }
+                        setTimeout(function() {
+                            if (confirm("벌레만도 못한 자가 위대한 자를 농락한 결과이니...\n악신의 분노를 샀습니다. 다시 도전하시겠습니까?")) {
+                                location.reload();
+                            }
+                        }, 2000);
+                    }
+                }
+            }
+            updateInventoryUI();
+        }
+        document.querySelector("#btn_up_atk").addEventListener("click", function() {
+            upgradeStat("atk", 5);
+        });
+        document.querySelector("#btn_up_def").addEventListener("click", function() {
+            upgradeStat("def", 5);
+        });
+        document.querySelector("#btn_up_maxhp").addEventListener("click", function() {
+            upgradeStat("maxhp", 10);
+        });
+        document.querySelector("#btn_up_atkspeed").addEventListener("click", function() {
+            upgradeStat("atkspeed", 30);
+        });
+        document.querySelector("#btn_up_maxPotion").addEventListener("click", function() {
+            upgradeStat("maxPotion", 50);
+        });
+        document.querySelector("#btn_up_potionPower").addEventListener("click", function() {
+            upgradeStat("potionPower", 50);
+        });
+
+        /*
+            여기까지 느낀 점. 
+            처음부터 완성된 로직을 가져다 쓰는 게 아니라 그때그때 필요한 HTML과 CSS를 결정하고 
+            그게 작동하는 방식을 매번 내려와서 스크립트로 로직을 짜는 것
+            오해가 풀렸음.
+            처음부터 선생님의 코드를 그대로 다 적을 수 있어야 한다는 생각은 오만이었음.
+        */
+        
+        // 탐험(이동) 로직 + 미니맵과 결합
+        document.querySelector("#btn_up").addEventListener("click", function() {
+            if (isMoving) {
+                return;
+            }
+
+            isMoving = true;
+            
+            if(player.y <= 0) {
+                document.querySelector("#system_notification").innerHTML = "차가운 벽이 가로막고 있습니다."
+                isMoving = false;
+            } else {
+                player.y -= 1;
+                if (player.x == 1 && player.y == 0 && player.floor < 5) {
+                    if (confirm("다음 층으로 진입하는 계단을 발견했습니다. 이동하시겠습니까?")) {
+                        player.floor += 1;
+                        if (player.floor == 5) {
+                            player.x = 0;
+                            player.y = 4;   
+                        } else {
+                            player.x = 1;
+                            player.y = 4;
+                        }
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "계단을 올라가지 않고, 방안을 둘러본다."
+                    }
+                    isMoving = false;
+                } else if (player.floor == 5 && player.x == 0 && player.y == 0) {
+                    document.querySelector("#system_notification").innerHTML = "거대한 문 앞이다.<br>문에서 기어코 나를 죽이겠다는 악의가 느껴진다...<br>";
+                    
+                    if (confirm("보스방에 진입하시겠습니까?")) {
+                        setTimeout(function() {
+                            startCombat_Boss("dullahan");
+                        }, 500);
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "아직은 이 악의를 마주치기에 용기가 부족하다... 물러나자."
+                        player.y += 1;
+                        isMoving = false;
+                    }
+                } else {
+                    document.querySelector("#system_notification").innerHTML = "다음 방으로 들어선다.<br>"
+                    setTimeout(function() {
+                        randomEncounter();
+                    }, 500);
+                }
+                document.querySelector("#map_log").innerHTML = "현재 좌표 : " + player.floor + "층, "+ "[" + (player.x+1) + ", " + (player.y+1) + "]"
+                drawMap();
+            }
+        })
+        // ▼ 아래로 이동 버튼
+        document.querySelector("#btn_down").addEventListener("click", function() {
+            if (isMoving) return;
+            isMoving = true;
+    
+            if(player.y >= 4) {
+                document.querySelector("#system_notification").innerHTML = "차가운 벽이 가로막고 있습니다.";
+                isMoving = false;
+            } else {
+                player.y += 1;
+        
+                if (player.x == 1 && player.y == 0 && player.floor < 5) {
+                    if (confirm("다음 층으로 진입하는 계단을 발견했습니다. 이동하시겠습니까?")) {
+                        player.floor += 1;
+                        if (player.floor == 5) { player.x = 0; player.y = 4; } 
+                        else { player.x = 1; player.y = 4; }
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "계단을 올라가지 않고, 방안을 둘러봅니다.";
+                    }
+                    isMoving = false;
+            
+                } else if (player.floor == 5 && player.x == 0 && player.y == 0) {
+                    document.querySelector("#system_notification").innerHTML = "거대한 문 앞이다.<br>문에서 기어코 나를 죽이겠다는 악의가 느껴진다...<br>";
+                    if (confirm("보스방에 진입하시겠습니까?")) {
+                        setTimeout(function() { startCombat_Boss("dullahan"); }, 500);
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "아직은 이 악의를 마주치기에 용기가 부족하다... 물러나자.";
+                        player.y -= 1; // 아래로 와서 거절했으니 다시 위로 튕겨냄
+                        isMoving = false;
+                    }   
+                } else {
+                    document.querySelector("#system_notification").innerHTML = "다음 방으로 들어섭니다.<br>";
+                    setTimeout(function() { randomEncounter(); }, 500);
+                }
+                document.querySelector("#map_log").innerHTML = "현재 좌표 : " + player.floor + "층, [" + (player.x+1) + ", " + (player.y+1) + "]";
+                drawMap();
+            }
+        });
+
+        // ◀ 왼쪽으로 이동 버튼
+        document.querySelector("#btn_left").addEventListener("click", function() {
+            if (isMoving) return;
+            isMoving = true;
+    
+            if(player.floor == 5 || player.x <= 0) {
+                document.querySelector("#system_notification").innerHTML = "차가운 벽이 가로막고 있습니다.";
+                isMoving = false;
+            } else {
+                player.x -= 1;
+        
+                if (player.x == 1 && player.y == 0 && player.floor < 5) {
+                    if (confirm("다음 층으로 진입하는 계단을 발견했습니다. 이동하시겠습니까?")) {
+                        player.floor += 1;
+                        if (player.floor == 5) { player.x = 0; player.y = 4; } 
+                        else { player.x = 1; player.y = 4; }
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "계단을 올라가지 않고, 방안을 둘러봅니다.";
+                    }
+                    isMoving = false;
+            
+                } else if (player.floor == 5 && player.x == 0 && player.y == 0) {
+                    document.querySelector("#system_notification").innerHTML = "거대한 문 앞이다.<br>문에서 기어코 나를 죽이겠다는 악의가 느껴진다...<br>";
+                    if (confirm("보스방에 진입하시겠습니까?")) {
+                        setTimeout(function() { startCombat_Boss("dullahan"); }, 500);
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "아직은 이 악의를 마주치기에 용기가 부족하다... 물러나자.";
+                        player.x += 1; // 왼쪽으로 와서 거절했으니 다시 오른쪽으로 튕겨냄
+                        isMoving = false;
+                    }
+                } else {
+                    document.querySelector("#system_notification").innerHTML = "다음 방으로 들어섭니다.<br>";
+                    setTimeout(function() { randomEncounter(); }, 500);
+                }
+                document.querySelector("#map_log").innerHTML = "현재 좌표 : " + player.floor + "층, [" + (player.x+1) + ", " + (player.y+1) + "]";
+                drawMap();
+            }
+        });
+
+        // ▶ 오른쪽으로 이동 버튼
+        document.querySelector("#btn_right").addEventListener("click", function() {
+            if (isMoving) return;
+            isMoving = true;
+    
+            if(player.floor == 5 || player.x >= 2) {
+                document.querySelector("#system_notification").innerHTML = "차가운 벽이 가로막고 있습니다.";
+                isMoving = false;
+            } else {
+                player.x += 1;
+        
+                if (player.x == 1 && player.y == 0 && player.floor < 5) {
+                    if (confirm("다음 층으로 진입하는 계단을 발견했습니다. 이동하시겠습니까?")) {
+                        player.floor += 1;
+                        if (player.floor == 5) { player.x = 0; player.y = 4; } 
+                        else { player.x = 1; player.y = 4; }
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "계단을 올라가지 않고, 방안을 둘러봅니다.";
+                    }
+                    isMoving = false;
+            
+                } else if (player.floor == 5 && player.x == 0 && player.y == 0) {
+                    document.querySelector("#system_notification").innerHTML = "거대한 문 앞이다.<br>문에서 기어코 나를 죽이겠다는 악의가 느껴진다...<br>";
+                    if (confirm("보스방에 진입하시겠습니까?")) {
+                        setTimeout(function() { startCombat_Boss("dullahan"); }, 500);
+                    } else {
+                        document.querySelector("#system_notification").innerHTML = "아직은 이 악의를 마주치기에 용기가 부족하다... 물러나자.";
+                        player.x -= 1; // 오른쪽으로 와서 거절했으니 다시 왼쪽으로 튕겨냄
+                        isMoving = false;
+                    }
+                } else {
+                    document.querySelector("#system_notification").innerHTML = "다음 방으로 들어섭니다.<br>";
+                    setTimeout(function() { randomEncounter(); }, 500);
+                }
+                document.querySelector("#map_log").innerHTML = "현재 좌표 : " + player.floor + "층, [" + (player.x+1) + ", " + (player.y+1) + "]";
+                drawMap();
+            }
+        });
+
+        /*
+            여기까지 느낀 점. 
+            +=와 =의 차이점을 뼈저리게 느꼈음.
+            그리고 if의 else를 통해서 행동을 제한하는 습관이 중요하다 느낌.
+            미니맵 추가
+            가챠 상황 추가
+            그리고 클릭이 가능한 영역에서는 가능하면 광클을 막아주는 자물쇠를 채워주는 것이 좋음.
+        */
+
+        // 맵 시스템. 고정 지도는 5층을 따로 표현해야 하거나 아예 동적 시스템을 활용해야 함.
+        // 훗날 업그레이드를 위해서는 동적 시스템을 활용하는 것이 낫다고 판단.
+        document.querySelector("#btn_map").addEventListener("click", function() {
+            openMap();
+            drawMap();
+        });
+
+        function openMap() {
+            let mapDisplay = document.querySelector("#map_window");
+            // 맵이 안 열려있으면 눌렀을 때 열고, 열려있으면 눌렀을 때 닫아라.
+            if (mapDisplay.style.display == "block") {
+                mapDisplay.style.display = "none";
+                return;
+            } // 여기까지가 맵이 열려있냐 아니냐 판단하는 것.
+            // 그리고 일단 열어라!
+            mapDisplay.style.display = "block";
+            
+        }
+
+        function drawMap() {
+            let mapDisplay = document.querySelector("#map_window");
+            let mapString = "=== " + player.floor + "층 미니맵 ===<br>";
+            let map_x = (player.floor == 5)? 1 : 3;
+            for (let i=0; i<5; i++) {
+                for (let j=0; j<map_x; j++) {
+                    if (player.x == j && player.y == i) {
+                        mapString += "[●]";
+                    } else {
+                        mapString += "[○]";
+                    }
+                }
+                mapString += "<br>";
+            }
+            mapDisplay.innerHTML = mapString;
+        }
+
+        /*
+            인벤토리 닫기 버튼 삭제와 비슷한 문제가 발생했음.
+            결국 map이라는 div를 만들어서 그 안에 log와 버튼을 다 따로 삽입함.
+            처음에는 drawMap() 안에 열고 닫는 로직까지 한 꺼번에 넣으니, 움직일 때마다 미니맵을 열고 닫는 미친 사태가 발생함
+            그래서 drawMap()은 그리는 로직만 남겨두고 열고 닫는 openMap() 함수를 따로 만들어버림.
+            이때 아예 안 켜지는 사태가 발생함.
+            여기서 다시 전역변수 사태가 발생함. 
+            drawMap() 안에 let mapDisplay = document.querySelector("#map_window");를 빼버리고 실행했더니 문제가 발생.
+            그래서 미니맵 버튼을 가져온 뒤 다시 오픈과 드로우를 둘 다 넣어주고, 
+            이동 로직에도 drawMap() 함수를 넣어주고 끝냄.
+        */
+
+        function randomEncounter() {
+            let dice = Math.floor(Math.random()*100) + 1;
+            let sysLog = document.querySelector("#system_notification");
+
+            if (dice <= 40) {
+                let monster = monsterDB["skeleton"];
+                sysLog.innerHTML += "어둠 속에서 " + monster.name + "가 튀어나왔다!";
+                setTimeout(function() {
+                    startCombat("skeleton");
+                }, 1000);
+            } else if (dice <= 70) {
+                sysLog.innerHTML += "방 한 가운데에 낡은 보물상자가 놓여 있다.<br>"
+                sysLog.innerHTML += "<button id='btn_open_chest'>열어본다</button><br>";
+                sysLog.innerHTML += "<button id='btn_ignore_chest'>지나친다</button><br>";
+                isMoving = false;
+                document.querySelector("#btn_open_chest").addEventListener("click", function() {
+
+                    let mimicDice = Math.floor(Math.random()*100) + 1
+                    if (mimicDice <= 30) {
+                        let trap = monsterDB["mimic"];
+                        sysLog.innerHTML = "상자를 열기 위해 손을 대려고 했다.<br>그 순간 상자의 입구 틈새로 시퍼런 이빨이 돋아나며 나를 공격해온다."
+                        sysLog.innerHTML += trap.name + " 출현!"
+                        setTimeout(function() {
+                            startCombat("mimic");
+                        }, 1000);
+                    } else {
+                        sysLog.innerHTML = "찰칵! 먼지 쌓인 상자가 열리며 안을 들여다 볼 수 있었다.<br>"
+                        let itemDice = Math.floor(Math.random()*100) + 1;
+                        if (itemDice <= 80) {
+                            let itemIndex = Math.floor(Math.random()*itemDB.length);
+                            let reward = itemDB[itemIndex];
+                            let rootMoney = Math.floor((Math.random()*20)) + 1;
+                            setTimeout(function() {
+                                sysLog.innerHTML += "상자에서 전리품을 발견했다!"
+                                sysLog.innerHTML += reward.name + "과(와) " + rootMoney + "G를 획득했다."
+                                player.inventory.push(reward);
+                                player.gold += rootMoney;
+                                updateInventoryUI();
+                                drawMap();
+                            }, 500);
+                        } else {
+                            setTimeout(function() {
+                                sysLog.innerHTML += "상자에서 아무것도 발견하지 못했습니다."
+                            }, 500);
+                        }
+                    }
+                });
+
+                document.querySelector("#btn_ignore_chest").addEventListener("click", function() {
+                    sysLog.innerHTML = "찜찜한 기분이 들어 상자를 무시하기로 했다."
+                });
+
+            } else {
+                let noteIndex = Math.floor(Math.random() * creepyNotes.length);
+                sysLog.innerHTML += "이 방에는 몬스터가 없다. 대신 다른 것이 보인다... <br>[" + creepyNotes[noteIndex] + "]";
+                isMoving = false;
+            }
+        }
+        /*
+            미믹이랑 보물상자에다가 열 거냐, 안 열 거냐를 넣는 것도 좋아 보임.
+            그리고 한 가지 더. 문을 열고 들어간다는 이동 시의 알림 메세지랑 함께 나오게 하려면 =가 아닌 +=를 써야하지 않겠는가?
+            미믹이 나오게 하는 방식에서 동적 DOM을 활용함.
+            상자가 나왔을 때 일회성 버튼을 만들고, 그것을 클릭했을 때와 지나치기를 했을 때를 구분할 것.
+            
+            느낀점
+            1. 위에서 썼었던 변수 dice를 그대로 끌고 와서 사용하게 된다면 이미 확정된 숫자를 다시 끌고 와서 또 대입하는 것이기 때문에 무용지물
+            2. setTimeout은 무조건 구문 자체가 함수의 꼴을 가지고 있어야 함.
+            3. 객체 안에 객체를 넣어, 그 중 하나를 가져오는 방법도 생각해낼 수 있었음.
+                => 하지만 object라는 명령어 사용법에 익숙치 않기 때문에 배열로 바꾸고 전체적인 인벤토리 대공사를 함.
+            4. 또한 금화는 훗날 거래 시스템을 만들기 위해서 단위를 1개로 고정했어야 함.
+                그렇다면 아이템 자체로 만드는 게 맞는가? 이것을 생각해본다면 답이 없다고 판단, 
+                아예 인벤토리랑 비슷하게 바로 아래칸에 금화 가방을 따로 만들기로 결정.
+                다른 방식으로 금화를 쌓을 수 있게 만듬.
+                그냥 금화 가방을 따로 만들어주는 것.
+                그리고 어떤 이벤트든 돈을 잃거나 얻을 때 모두 player.gold로 해결 할 수 있도록 만듬.
+            5. 게임에서는 광클 금지를 넣어주는 게 가장 안전하다는 것을 느낌. 
+                미믹 소환 시 광클하게 되면 갑자기 스켈레톤이 튀어나오는 버그를 발견함.
+        */
+        
+        let playerAttackTimer;
+        let monsterAttackTimer;
+
+        function startCombat(monsterKey) {
+            let original = monsterDB[monsterKey];
+
+            currentMonster = {
+                name : original.name,
+                hp : original.hp,
+                maxhp : original.hp,
+                atk : original.atk,
+                def : original.def,
+                minGold : original.minGold,
+                maxGold : original.maxGold,
+                soul : original.soul,
+                atkspeed : original.atkspeed
+            }
+
+            document.querySelector("#btn_up").style.display = "none";
+            document.querySelector("#btn_down").style.display = "none";
+            document.querySelector("#btn_left").style.display = "none";
+            document.querySelector("#btn_right").style.display = "none";
+            document.querySelector("#combat_window").style.display = "block";
+
+            updateCombatLog();
+
+            let sysLog = document.querySelector("#system_notification");
+            sysLog.innerHTML = currentMonster.name + "과(와)의 전투가 곧 시작됩니다!<br>"
+
+            setTimeout(function() {
+                sysLog.innerHTML = "※ 전투 개시! ※<br>";
+                playerAttackTimer = setInterval(playerAttack, player.atkspeed);
+                monsterAttackTimer = setInterval(monsterAttack, currentMonster.atkspeed);
+            }, 1000)
+        };
+
+        function playerAttack() {
+            if (currentMonster.hp <= 0 || player.hp <= 0) {
+                return;
+            }
+
+            let playerDamage = player.atk - currentMonster.def;
+            if (playerDamage <=0) {
+                playerDamage = 1;
+            }
+            currentMonster.hp -= playerDamage;
+            document.querySelector("#system_notification").innerHTML +=
+                "나의 공격으로 " + currentMonster.name + "에게 " + playerDamage + "의 데미지를 입혔다!<br>";
+            updateCombatLog();
+
+            if (currentMonster.hp <= 0) {
+                endCombat(true);
+            }
+        };
+
+        function monsterAttack() {
+            if (currentMonster.hp <= 0 || player.hp <= 0) {
+                return;
+            }
+
+            let monsterDamage = currentMonster.atk - player.def;
+            if (monsterDamage <=0) {
+                monsterDamage = 1;
+            }
+            player.hp -= monsterDamage;
+            let gameScreen = document.querySelector("#game_screen");
+            gameScreen.classList.add("shake-active");
+            setTimeout(function() {
+                gameScreen.classList.remove("shake-active");
+            }, 300); // 0.3초 뒤에 흔들림 효과 제거
+            document.querySelector("#system_notification").innerHTML +=
+                currentMonster.name + "이 나에게" + monsterDamage + "의 데미지를 입혔다!<br>";
+            updateCombatLog();
+
+            if (player.hp <= 0) {
+                endCombat(false);
+            }
+        };
+
+        /*
+            ㅋㅋ 만약 currentMonster.hp == 0 || player.hp == 0 라고 해버리면 
+            '정확하게' 피가 0이 되지 않는 이상, 서로 - 피 되더라도 계속 뒤질라게 때림 ㅋㅋㅋㅋㅋㅋㅋㅋ
+        */
+
+        function endCombat(isVictory) {
+            clearInterval(playerAttackTimer);
+            clearInterval(monsterAttackTimer);
+
+            let sysLog = document.querySelector("#system_notification");
+
+            if (isVictory) {
+                sysLog.innerHTML = currentMonster.name + "과(와)의 전투에서 승리했다!<br>"
+                sysLog.innerHTML += currentMonster.soul + "소울을 획득했다.<br>"
+                player.soul += currentMonster.soul;
+
+                let goldDice = Math.floor(Math.random() * 100) + 1;
+                if (goldDice <= 30) {
+                    let droppedGold = Math.floor(Math.random() * (currentMonster.maxGold - currentMonster.minGold + 1)) + currentMonster.minGold
+                    // 차이만큼은 랜덤하게 뽑히게 두고, 지금 몬스터의 최소 골드만큼은 뽑히게 만들기.
+                    player.gold += droppedGold;
+                    sysLog.innerHTML += "바닥에 떨어진 <b>" + droppedGold + "</b>G를 주웠다.<br>" 
+                }// 이렇게 되면 몬스터에게서 30% 확률로 얻게 되는 거구나.
+
+                let potionDice = Math.floor(Math.random() * 100) + 1;
+                if (potionDice <= 30) {
+                    if (player.potion < player.maxPotion) {
+                        player.potion += 1;
+                        sysLog.innerHTML += "몬스터의 사체에서 피를 추출해 포션 1병을 채웠다.<br>";
+                    } else {
+                        sysLog.innerHTML += "비어있는 포션 병이 없어, 피를 추출하지 못한다.<br>"
+                    }
+                } 
+                // 훗날 너무 포션을 많이 마셔서 중독되게 만드는 시스템을 구현해야겠다.
+                // 마을로 돌아가 치료 받지 않으면 전투에서 5초에 1씩 체력이 빠지는 시스템을 만들어야겠음.
+                // 깰 수 있으면 깨보라고 존나 악랄하게 게임 만들어야겠음 
+
+                updateInventoryUI();
+                drawMap();
+
+                setTimeout(function() {
+                    document.querySelector("#combat_window").style.display = "none";
+                    document.querySelector("#btn_up").style.display = "inline-block";
+                    document.querySelector("#btn_down").style.display = "inline-block";
+                    document.querySelector("#btn_left").style.display = "inline-block";
+                    document.querySelector("#btn_right").style.display = "inline-block";
+                    sysLog.innerHTML = "격렬했던 사투의 흔적과 함께 방안은 고요해졌다.<br>이제 어느 방향으로 가볼까?"
+                    document.querySelector("#combat_log").innerHTML = "";
+                    isMoving = false;
+                }, 2000);
+            } else {
+                sysLog.innerHTML = "눈앞이 깜깜해진다... 내 흔적도 결국 이곳에 쓸쓸히 묻히겠지..."
+                let allButtons = document.querySelectorAll("button");
+                    for (let i=0; i<allButtons.length; i++) {
+                        allButtons[i].disabled = true;
+                    }
+                setTimeout(function() {
+                    if (confirm("다시 도전하시겠습니까?")) {
+                        location.reload();
+                    }
+                }, 2000)
+            }
+            currentMonster = null;
+        };
+        /*
+            골드를 획득했고, 획득한 만큼의 골드를 실시간으로 표시해주기 위해서는 drawMap을 실행시켜줘야 한다.
+            여기서 한 가지 더. 훗날 소울 전용 가방을 만들어서 보이게 만들어야 한다.
+        */
+
+        // 이제는 포션 빨아들이는 로직 만들 차례
+        /*
+            여기서 기획이 또 바뀜
+            본래는 인벤토리에 한계 없이 담을 수 있던 시스템이었음.
+            하지만 물약을 파밍할 만큼 파밍해서 어려워야 할 난이도의 던전 보스에게도 지속적으로 물약만 먹으며 버티는 경우를 방지하기로 함.
+            그래서 여기서 다시 인벤토리를 살짝 수정키로 함.
+        */
+        document.querySelector("#btn_heal").addEventListener("click", function() {
+            let sysLog = document.querySelector("#system_notification");
+
+            if (player.potion > 0) {
+                player.potion -= 1;
+                player.hp += player.potionPower;
+                
+                if (player.hp >= player.maxhp) {
+                    player.hp = player.maxhp;
+                }   // 무한 힐 방지.
+
+                sysLog.innerHTML += "[회복] 꿀꺽꿀꺽... 포션을 들이켰다.<br>";
+                sysLog.innerHTML += "체력이 " + player.potionPower + "만큼 회복되었다!<br>(남은 포션 : " + player.potion + "/" + player.maxPotion + ")";
+                if (currentMonster !== null) {
+                    updateCombatLog();
+                }
+            } else {
+                sysLog.innerHTML += "싸늘하다... 허리춤에 감촉이 느껴지지 않는다...<br>ㅈ됐다... 포션이 없다...";
+            }
+        });
+        
+        function updateCombatLog() {
+            let clog = document.querySelector("#combat_log");
+    
+            // 체력이 0 밑으로 떨어져도 게이지가 마이너스로 뚫고 나가지 않게 Math.max 처리
+            let monsterHpPercent = Math.max(0, (currentMonster.hp / currentMonster.maxhp) * 100);
+            let playerHpPercent = Math.max(0, (player.hp / player.maxhp) * 100);
+
+            let str = `
+                <div><b>[${currentMonster.name}]</b></div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill" style="width: ${monsterHpPercent}%;"></div>
+                    <div class="hp-text">${currentMonster.hp} / ${currentMonster.maxhp}</div>
+                </div>
+        
+                <div><b>[${player.name}]</b></div>
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill" style="width: ${playerHpPercent}%;"></div>
+                    <div class="hp-text">${player.hp} / ${player.maxhp}</div>
+                </div>
+            `;
+            clog.innerHTML = str;
+        };
+
+
+/*        function updateCombatLog() {
+            let clog = document.querySelector("#combat_log");
+            clog.innerHTML = "<b>[" + currentMonster.name + "]</b> HP : " + currentMonster.hp + "<br>";
+            clog.innerHTML += "<b>[" + player.name + "]</b> HP : " + player.hp;
+        };
+        */
+
+        function updateInventoryUI() {
+            let str1 = "<ul>";
+            for (let i in player.inventory) {
+                str1 += "<li><b>" + player.inventory[i].name + "</b></li>"
+            }
+            str1 += "</ul>";
+            document.querySelector("#inv_items").innerHTML = str1;
+            document.querySelector("#inv_potion").innerHTML = "소지 포션 : <b>" + player.potion + "/" + player.maxPotion + " 개</b> (현재 회복량 : " + player.potionPower + ")";
+            document.querySelector("#inv_gold").innerHTML = "소지 금화 : <b>" + player.gold + " G</b>";
+            document.querySelector("#inv_soul").innerHTML = "소지 소울 : <b>" + player.soul + "</b>";
+        }
+
+        function startCombat_Boss(bossKey) {
+            let original = monsterDB_BOSS[bossKey];
+
+            currentMonster = {
+                name : original.name,
+                hp : original.hp,
+                maxhp : original.hp,
+                atk : original.atk,
+                def : original.def,
+                atkspeed : original.atkspeed
+            }
+
+            document.querySelector("#btn_up").style.display = "none";
+            document.querySelector("#btn_down").style.display = "none";
+            document.querySelector("#btn_left").style.display = "none";
+            document.querySelector("#btn_right").style.display = "none";
+            document.querySelector("#combat_window").style.display = "block";
+
+            updateCombatLog();
+
+            let sysLog = document.querySelector("#system_notification");
+            sysLog.innerHTML = "<h3><b>" + currentMonster.name + "이 서서히 일어나 다가옵니다.</b></h3>";
+
+            setTimeout(function() {
+                sysLog.innerHTML = "※ 마지막 전투 개시! ※<br>";
+                playerAttackTimer = setInterval(playerAttack_Boss, player.atkspeed);
+                monsterAttackTimer = setInterval(monsterAttack_Boss, currentMonster.atkspeed);
+            }, 1500);
+        }
+
+        function playerAttack_Boss() {
+            if (currentMonster.hp <= 0 || player.hp <= 0) return;
+
+            let playerDamage = player.atk - currentMonster.def;
+            if (playerDamage <= 0) playerDamage = 1;
+    
+            currentMonster.hp -= playerDamage;
+            document.querySelector("#system_notification").innerHTML +=
+                "혼신의 일격! 보스에게 " + playerDamage + "의 데미지를 입혔다!<br>";
+            updateCombatLog();
+
+            if (currentMonster.hp <= 0) {
+                endCombat_Boss(true);
+            }
+        }
+
+        function monsterAttack_Boss() {
+            if (currentMonster.hp <= 0 || player.hp <= 0) return;
+
+            let monsterDamage = currentMonster.atk - player.def;
+            if (monsterDamage <= 0) monsterDamage = 1;
+    
+            player.hp -= monsterDamage;
+            let gameScreen = document.querySelector("#game_screen");
+            gameScreen.classList.add("shake-active");
+            setTimeout(function() {
+                gameScreen.classList.remove("shake-active");
+            }, 300); // 0.3초 뒤에 흔들림 효과 제거
+            document.querySelector("#system_notification").innerHTML +=
+                "<span class='boss_attack'>보스의 치명적인 공격! 나에게 " + monsterDamage + "의 데미지!</span><br>";
+            updateCombatLog();
+
+            if (player.hp <= 0) {
+                endCombat_Boss(false);
+            }
+        }
+
+        function endCombat_Boss(isVictory) {
+            clearInterval(playerAttackTimer);
+            clearInterval(monsterAttackTimer);
+
+            let sysLog = document.querySelector("#system_notification");
+
+            if (isVictory) {
+                // 승리 (게임 클리어)
+                sysLog.innerHTML = "<b>[" + currentMonster.name + "]이(가) 마침내 쓰러졌습니다!!</b><br>";
+                sysLog.innerHTML += "미궁의 지배자를 꺾고 탈출구를 찾아냈습니다!<br>";
+        
+                // 더 이상 아무것도 못 누르게 화면의 모든 버튼 마비시키기
+                let allButtons = document.querySelectorAll("button");
+                for(let i = 0; i < allButtons.length; i++) {
+                    allButtons[i].disabled = true;
+                }
+
+                setTimeout(function() {
+                    alert("축하합니다, " + player.name + "님!\n미궁을 완벽하게 정복하셨습니다!");
+                    location.reload(); // 엔딩 후 초기화
+                }, 3000);
+        
+            } else {
+                // 패배
+                sysLog.innerHTML = "압도적인 힘 앞에 무릎을 꿇었다... 이제 던전 입구를 열었던 마을은 피바다가 되겠지... 그 전에 내 목숨부터 걱정하는 게 우선이지 않을까... 아무것도 모르겠다... 그냥 눈이 감길 뿐이다...";
+        
+                let allButtons = document.querySelectorAll("button");
+                    for(let i = 0; i < allButtons.length; i++) {
+                    allButtons[i].disabled = true;
+                }
+
+                setTimeout(function() {
+                    if (confirm("보스의 악의에 짓눌렸습니다... 다시 도전하시겠습니까?")) {
+                        location.reload();
+                    }
+                }, 2000);
+            }
+            currentMonster = null;
+        }
+
+        /*
+            남은 할 일
+            1. 전투 시스템 (해결)
+            2. 물약 포션 시스템 (해결)
+            3. 스킬 시스템
+            4. 소울 스탯 강화 시스템
+            5. 소울 인벤토리 표시
+            6. 아이템 착용 효과, 장착 인터페이스
+            7. 아이템 위에 마우스 가져다 대면 아이템 효능(?) 나오게 만들기
+            8. 포션도 마찬가지. 현재 포션 회복력과 최대 포션량을 나오게 만들기
+            9. 현재 스테이터스 보이게 만들어야겠다.
+            '할 일'이라고 검색해서 채워 넣을 부분 찾기
+            가장 크게 느낀 것.
+                하고 싶은 로직을 만들 때 함수든 뭐든 선언 한 뒤에 열심히 하드 코딩을 하는 것도 좋지만, 
+                반복적으로 계속해서 인벤토리를 리셋한다던가 포션 소지량 실시간 변환
+                미니맵 실시간 변환 등등 계속해서 같은 작업을 반복해야 한다면 
+                하드 코딩한 부분을 따로 함수로 만들어서 각자의 자리에 계속해서 실행시켜주는 것이 가장 괜찮은 방법이 될 것 같다.
+        */
+    </script>
+</body>
+</html>
