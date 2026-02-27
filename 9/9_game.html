@@ -65,6 +65,8 @@
         justify-content: center;
         align-items: center;
         z-index: 9;  
+        font-size: 20px;
+        text-shadow: 0 0 10px white;
     }
     .item-heal { color: #ff4d4d; text-shadow: 0 0 10px #ff4d4d; }
     .item-boost { color: #ffff00; text-shadow: 0 0 10px #ffff00; }
@@ -339,7 +341,7 @@
                     // 탄환 생성
                     if (currentLevel % 5 == 0) spawnCirclePattern(currentLevel*1);
                     else if (currentLevel % 2 == 0) spawnSpreadPattern(currentLevel*3);
-                    else bulletSpawn();
+                    else bulletSpawn(currentLevel);
 
                     if (currentLevel % 2 == 0) { itemSpawn(Math.floor(Math.random()*2)) }
 
@@ -408,8 +410,6 @@
                 item.body.innerHTML = '⚡';
                 item.body.classList.add('item-boost');
             }
-            item.body.style.fontSize = '20px';
-            item.body.style.textShadow = "0 0 10px white";
 
             MovingObjs.push(item);
 
@@ -552,7 +552,7 @@
             gauge = 100;
             isCooldown = false;
             document.querySelector("#score").innerHTML = `점수 : 0<br> 스테이지 : 1`;
-            document.querySelector("#life").innerHTML = "♥♥♥♥♥♥";
+            lifeView();
             player.style.left = "345px";
             player.style.top = "345px";
             keys = {};
