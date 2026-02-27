@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>JS Rhythm Game - Life System</title>
+    <title>JS Rhythm Game - Final Integrated Edition</title>
     <style>
         /* CSS 변수: 각 레인의 테마 색상 정의 */
         :root { 
@@ -24,11 +24,11 @@
         .lane { position: relative; width: 25%; height: 100%; border-right: 1px solid #333; box-sizing: border-box; }
         .lane:last-child { border-right: none; }
 
-        /* 키 입력 시 레인 하단에서 올라오는 그라데이션 효과 */
-        .lane:nth-child(1).active { background: linear-gradient(to top, rgba(255, 68, 68, 0.4), transparent); }
-        .lane:nth-child(2).active { background: linear-gradient(to top, rgba(255, 235, 59, 0.4), transparent); }
-        .lane:nth-child(3).active { background: linear-gradient(to top, rgba(0, 242, 255, 0.4), transparent); }
-        .lane:nth-child(4).active { background: linear-gradient(to top, rgba(76, 175, 80, 0.4), transparent); }
+        /* 키 입력 시 레인 하단에서 올라오는 네온 그라데이션 효과 (S, D, J, K 순서 고정) */
+        .lane-s.active { background: linear-gradient(to top, rgba(255, 68, 68, 0.4), transparent); }
+        .lane-d.active { background: linear-gradient(to top, rgba(255, 235, 59, 0.4), transparent); }
+        .lane-j.active { background: linear-gradient(to top, rgba(0, 242, 255, 0.4), transparent); }
+        .lane-k.active { background: linear-gradient(to top, rgba(76, 175, 80, 0.4), transparent); }
 
         /* 판정선: 이 선에 맞춰 키를 눌러야 함 */
         #judge-line { position: absolute; bottom: 60px; width: 100%; height: 4px; background: white; box-shadow: 0 0 15px white; z-index: 5; }
@@ -47,6 +47,15 @@
         #key-d { color: var(--color-d); }
         #key-j { color: var(--color-j); }
         #key-k { color: var(--color-k); }
+
+        /* 메뉴 오버레이 공통 스타일 */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .menu-btn { padding: 15px 40px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 1.1rem; margin: 10px; transition: 0.2s; }
+        .menu-btn:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -58,10 +67,22 @@
     </div>
 
     <div id="game-container">
-        <div class="lane"></div>
-        <div class="lane"></div>
-        <div class="lane"></div>
-        <div class="lane"></div>
+        <div id="start-menu-overlay" class="overlay">
+            <h1 style="color: white; margin-bottom: 20px;">RHYTHM GAME</h1>
+            <button class="menu-btn" style="background: white; color: black;" onclick="goToDifficulty()">게임 시작</button>
+        </div>
+
+        <div id="difficulty-menu-overlay" class="overlay" style="display: none;">
+            <h2 style="color: white; margin-bottom: 20px;">난이도를 선택하세요</h2>
+            <button class="menu-btn" style="background: #4caf50; color: white;" onclick="startGame('easy')">쉬움 (Easy)</button>
+            <button class="menu-btn" style="background: #ffeb3b; color: black;" onclick="startGame('normal')">보통 (Normal)</button>
+            <button class="menu-btn" style="background: #ff4444; color: white;" onclick="startGame('hard')">어려움 (Hard)</button>
+        </div>
+
+        <div class="lane lane-s" id="lane-s"></div>
+        <div class="lane lane-d" id="lane-d"></div>
+        <div class="lane lane-j" id="lane-j"></div>
+        <div class="lane lane-k" id="lane-k"></div>
         
         <div id="display-area">
             <div id="combo"></div>
@@ -74,11 +95,15 @@
         </div>
     </div>
 
-    <button id="start-btn" style="margin-top:20px; padding:15px 40px; cursor:pointer; font-size:1.2rem; background: white; border:none; border-radius:5px; font-weight:bold;">게임 시작</button>
-
     <script>
         // --- 전역 변수 및 설정 ---
-        const laneElements = document.querySelectorAll('.lane');
+        // 레인 엘리먼트를 ID로 명확히 가져와 순서 꼬임 방지
+        const laneElements = [
+            document.getElementById('lane-s'),
+            document.getElementById('lane-d'),
+            document.getElementById('lane-j'),
+            document.getElementById('lane-k')
+        ];
         const keys = ['s', 'd', 'j', 'k'];
         const laneColors = ['var(--color-s)', 'var(--color-d)', 'var(--color-j)', 'var(--color-k)'];
         
@@ -89,21 +114,42 @@
         let gameActive = false; // 게임 진행 상태
         let spawnInterval, timerInterval;
 
-        const noteSpeed = 6;    // 노트가 내려오는 속도 (px/frame)
+        // 난이도에 따라 변할 값들
+        let noteSpeed = 6;      // 노트 하강 속도
+        let spawnRate = 600;    // 노트 생성 주기
         const judgeLineY = 540; // 판정선의 Y축 위치
 
-        // --- 게임 시작 로직 ---
-        document.getElementById('start-btn').addEventListener('click', function() {
-            if (gameActive) return; // 이미 게임 중이면 중복 실행 방지
-            this.style.visibility = 'hidden'; // 시작 버튼 숨기기
-            resetGame(); // 게임 데이터 초기화
+        // --- 메뉴 전환 로직 ---
+        function goToDifficulty() {
+            document.getElementById('start-menu-overlay').style.display = 'none';
+            document.getElementById('difficulty-menu-overlay').style.display = 'flex';
+        }
+
+        // --- 게임 시작 로직 (난이도 선택 시 실행) ---
+        function startGame(level) {
+            if (gameActive) return;
+
+            // 난이도별 변수 설정
+            if (level === 'easy') {
+                noteSpeed = 4;
+                spawnRate = 850;
+            } else if (level === 'normal') {
+                noteSpeed = 6;
+                spawnRate = 600;
+            } else if (level === 'hard') {
+                noteSpeed = 9;
+                spawnRate = 450;
+            }
+
+            document.getElementById('difficulty-menu-overlay').style.display = 'none';
+            resetGame();
             gameActive = true;
             
-            // 0.6초마다 0~3 사이의 난수를 생성하여 레인 결정
+            // 0.6초(또는 난이도별 주기)마다 노트 생성
             spawnInterval = setInterval(() => {
-                const randIndex = Math.floor(Math.random() * 4); // 결정된 인덱스의 레인에 노트 생성 함수 호출
+                const randIndex = Math.floor(Math.random() * 4);
                 createNote(randIndex);
-            }, 600);
+            }, spawnRate);
 
             // 1초마다 시간 감소 및 종료 체크
             timerInterval = setInterval(() => {
@@ -111,7 +157,7 @@
                 document.getElementById('timer').innerText = `TIME: ${timeLeft}`;
                 if (timeLeft <= 0) endGame("시간종료! 클리어!");
             }, 1000);
-        });
+        }
 
         // 게임 데이터 리셋 함수
         function resetGame() {
@@ -125,12 +171,11 @@
 
         // 게임 종료 처리 함수
         function endGame(msg) {
-            gameActive = false; // 제어 플래그를 꺼서 모든 이동 로직 중단
-            // 실행 중인 모든 무한 루프(노트 생성, 타이머) 정지
-            clearInterval(spawnInterval); // 노트 생성 중단
-            clearInterval(timerInterval); // 타이머 중단
+            gameActive = false;
+            clearInterval(spawnInterval);
+            clearInterval(timerInterval);
             alert(`${msg}\n최종 점수: ${score}`);
-            document.getElementById('start-btn').style.visibility = 'visible'; // 초기 화면 복구
+            document.getElementById('start-menu-overlay').style.display = 'flex';
             document.getElementById('judgment').innerText = "GAME OVER";
         }
 
@@ -138,45 +183,39 @@
         function createNote(idx) {
             const note = document.createElement('div');
             note.className = 'note';
-            note.style.top = '-30px'; // 화면 위쪽 안보이는 곳에서 시작
-            
-            // 레인 색상 및 네온 효과 부여
+            note.style.top = '-30px'; 
             note.style.backgroundColor = laneColors[idx];
             note.style.boxShadow = `0 0 10px ${laneColors[idx]}`;
             
-            laneElements[idx].appendChild(note); // 해당 레인에 노트 추가
+            laneElements[idx].appendChild(note);
 
             let noteTop = -30;
-            // 개별 노트마다 고유의 타이머(setInterval) 할당
             const move = setInterval(() => {
                 if (!gameActive) { clearInterval(move); note.remove(); return; }
                 
-                noteTop += noteSpeed; // 설정된 속도만큼 Y좌표(아래) 이동
+                noteTop += noteSpeed; 
                 note.style.top = noteTop + 'px';
 
-                // 화면 밖(600px)으로 나갔을 때 리소스 해제(miss 처리)
                 if (noteTop > 600) {
-                    clearInterval(move);        // 타이머 정지
-                    if (note.parentNode) {     // 메모리에서 객체 제거
-                        note.remove();         // 생명력 감소 함수 호출
-                        handleMiss(); // 미스 처리 함수 호출
+                    clearInterval(move);
+                    if (note.parentNode) {
+                        note.remove(); 
+                        handleMiss(); 
                     }
                 }
-            }, 20);                     // 50FPS 성능 유지
-            note.dataset.timerId = move; // 인터벌 ID 저장 
+            }, 20);
+            note.dataset.timerId = move; 
         }
 
         // --- 미스 및 목숨 처리 로직 ---
         function handleMiss() {
-            lives--; // 목숨 감소
-            applyJudgment('MISS', '#ff4444', true); // 미스 판정 표시
+            lives--; 
+            applyJudgment('MISS', '#ff4444', true);
             
-            // 목숨 UI 업데이트
             let heartIcons = "";
             for(let i=0; i<lives; i++) heartIcons += "❤️";
             document.getElementById('life-container').innerText = heartIcons || "OUT";
 
-            // 목숨이 0이면 즉시 종료
             if (lives <= 0) {
                 endGame("목숨이 없습니다...");
             }
@@ -185,23 +224,23 @@
         // --- 키 입력 및 판정 로직 ---
         window.addEventListener('keydown', (e) => {
             if (!gameActive) return;
-            const keyIdx = keys.indexOf(e.key.toLowerCase());
-            if (keyIdx === -1) return; // S,D,J,K 이외의 키 무시
+            const keyName = e.key.toLowerCase();
+            const keyIdx = keys.indexOf(keyName);
+            if (keyIdx === -1) return;
 
-            laneElements[keyIdx].classList.add('active'); // 레인 불빛 효과
+            // 해당 레인에 active 클래스 추가 (네온 효과)
+            laneElements[keyIdx].classList.add('active');
 
             const notes = laneElements[keyIdx].querySelectorAll('.note');
             if (notes.length > 0) {
-                const target = notes[0]; // 해당 레인에서 가장 아래에 있는 노트 선택
-                const currentY = parseInt(target.style.top);    // 현재 노트 위치
-                const distance = Math.abs(currentY - judgeLineY); // 판정선과의 오차 계산
+                const target = notes[0]; 
+                const currentY = parseInt(target.style.top);
+                const distance = Math.abs(currentY - judgeLineY);
 
-                
-                if (distance < 100) { // 100px 범위 내 성공 인정
-                    clearInterval(target.dataset.timerId); // 판정 성공 시 이동 정지
-                    target.remove(); // 노트 제거
+                if (distance < 100) {
+                    clearInterval(target.dataset.timerId);
+                    target.remove();
                     
-                    // 거리에 따른 차등 등급 부여
                     if (distance < 40) applyJudgment('PERFECT', '#ffffff');
                     else if (distance < 70) applyJudgment('GREAT', '#ffff00');
                     else applyJudgment('GOOD', '#cccccc');
@@ -209,9 +248,9 @@
             }
         });
 
-        // 키를 뗄 때 레인 불빛 제거
         window.addEventListener('keyup', (e) => {
-            const keyIdx = keys.indexOf(e.key.toLowerCase());
+            const keyName = e.key.toLowerCase();
+            const keyIdx = keys.indexOf(keyName);
             if (keyIdx !== -1) {
                 laneElements[keyIdx].classList.remove('active');
             }
@@ -225,11 +264,10 @@
             judgeEl.style.color = color;
 
             if (isMiss) {
-                combo = 0; // 콤보 초기화
+                combo = 0;
                 comboEl.innerText = "";
             } else {
-                combo++; // 콤보 증가
-                // 판정별 점수 부여
+                combo++;
                 score += (text === 'PERFECT' ? 100 : text === 'GREAT' ? 50 : 20);
                 comboEl.innerText = combo > 1 ? `${combo} COMBO` : "";
                 document.getElementById('score').innerText = `SCORE: ${score}`;
