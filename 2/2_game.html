@@ -351,7 +351,7 @@
     밧줄을 풀고 탈출하는 사이에 
     🍲고양이의 요리가 거의 다 완성되었다! 
     
-    고양이가 올⏰30초 정도의 시간 안에 
+    고양이가 올⏰40초 정도의 시간 안에 
     집안을 탐색해서 탈출하자! 🐾
     </pre>
         <a href="#" class="buttonClass" onclick="startGame()">🐹탈출하기🐹</a>
@@ -376,7 +376,7 @@
         }
 
         function startTimer() {
-            timeLeft = 30; /* 시간초 설정 */
+            timeLeft = 40; /* 시간초 설정 */
             document.getElementById("timerDisplay").innerText = timeLeft;
             timerId = setInterval(function () {
                 timeLeft--;
@@ -388,7 +388,7 @@
             }, 1000);
         }
 
-       function gameOverTime() {
+    function gameOverTime() {
 
     clearInterval(timerId);
 
@@ -500,10 +500,8 @@
     scissor: false
     };
 
-
-        function addItem(itemName) {
-
-            inventoryState[itemName] = true;
+    function addItem(itemName) {
+    inventoryState[itemName] = true;
 
 
     if(itemName === "shovel"){
@@ -734,7 +732,7 @@ function finishEscape(){
             livingPop = window.open(
                 "popup.html?img=popup3.png",
                 "livingPop",
-                option
+                optionhgb
             );
         }
     </script>
@@ -901,6 +899,13 @@ function finishEscape(){
 
 
         function resetGame() { /* 다시하기 */
+
+    inventoryState = {
+        shovel: false,
+        oil: false,
+        scissor: false
+        };
+
             clearInterval(timerId);
             hasScissors = false;
             document.getElementById("slot1").style.backgroundImage = "none";
