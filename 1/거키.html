@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>거지 키우기</title>
+</head>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .layout {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        border: 1px solid black;
+    }
+
+    /* HEAD */
+    .head {
+        /* border: 1px solid black; */
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 4px;
+        height: 60px;
+        background-color: rgb(216, 231, 240);
+    }
+    .header_left {
+        /* border: 1px solid red; */
+        width: 300px;
+        height: 30px;
+        justify-content: end;
+    }
+    .header_right {
+        /* border: 1px solid blue; */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 120px;
+        height: 50px;
+    }
+    #perclick, #persecond {
+        /* border: 1px solid black; */
+        height: 20px;
+        display: flex;
+        align-items: flex;
+        justify-content: end;
+        background-color: lightgray;
+    }
+
+    /* BODY */
+    .body {
+        border: 1px solid black;
+        flex: 1;  
+    }
+    #begging {
+        /* border: 1px solid yellow; */
+        z-index: 1;
+        display: flex;
+        flex-direction: row;
+        text-align: center;
+        background-image: url("img/해변.jpg");
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+    }
+    #begup, #timeup {
+        z-index: 2;
+        width: 150px;
+        height: 60px;
+        justify-content: center;
+        align-items: center;
+        background-color: lightyellow;
+        padding-top: 7px;
+        cursor: pointer;
+    }
+    #rjwl {
+        height: 200px;
+        width: 200px;
+        position: absolute;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20%;
+        margin-left: 10%;
+    }
+    .tail {
+    /* border: 1px solid black; */
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+}
+.item-slot {
+    border: 1px solid #ccc;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.item-slot input {
+    width: 100%;
+    cursor: pointer;
+}
+.item-slot input:hover {
+    background-color: lightblue;
+}
+#stack , #realest , #country , #al{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+}
+.stack_item, .realestate, .cty, .first {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+/* #realest {
+    display: flex;
+    flex-direction: row;
+} */
+/* .realestate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+} */
+/* #country {
+    display: flex;
+    flex-direction: row;
+} */
+/* .cty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1; 
+} */
+
+#btn_open:hover {
+    cursor: pointer;
+}
+</style>
+<body>
+    <div class="layout">
+<!--페이지 머리 부분-->
+    <div class="head">
+        <div class="header_left" id="nowmoney">원</div>
+        <div class="header_right">
+            <div id="perclick">/클릭</div>
+            <div id="persecond">/초</div>
+        </div>
+    </div>
+<!--페이지 작동 부분-->
+    <div class="body" id="begging" onclick="beg()">
+        <div class="body" id="begup" onclick="begup()"></div>
+        <div class="body" id="timeup" onclick="timeup()"></div>
+        <img src="img/거지.jpg" id="rjwl"><script></script>
+    <!-- <input type="button" id="btn_open" value="미니게임">
+    <div id="area"></div>
+    <script>
+        let nwin;
+        document.getElementById("btn_open").addEventListener('click',() => {
+            let width = 480;
+            let height = 360;
+            let left = (screen.width - width) / 2;
+            let top = (screen.heigth = height) / 2;
+            let feature = `width=${width},heigth=${height},left=${left},top=${top}`;
+            nwin = window.open('슈퍼헥사곤.html','',feature);
+        })
+    </script> -->
+    </div>
+        <script>
+            //변수 설정
+            let money = 10000;
+            let perclick = 10;
+            let persecond = 1;
+            let scmoney = 10;
+            let albaActive = false;
+            let alba2Active = false;
+            let alba3Active = false;
+            let alba4Active = false;
+            let alba5Active = false;
+            let alba6Active = false;
+            let alba7Active = false;
+            let alba8Active = false;
+            let alba9Active = false;
+
+            const moneyEl = document.querySelector("#nowmoney");
+            const perclickEl = document.querySelector("#perclick");
+            const persecondEl = document.querySelector("#persecond");
+            const bgEl = document.querySelector("#begup");
+            const psEl = document.querySelector("#timeup");
+
+            //통합 innerHTML
+            function updateDisplay() {
+                moneyEl.innerHTML = `💰${money}원`;
+                perclickEl.innerHTML = `${perclick}원/클릭`;
+                persecondEl.innerHTML = `${persecond}원/초`;
+                bgEl.innerHTML = `클릭당 +2원 증가<br>비용: ${Math.floor(perclick ** 1.3)}원`;
+                psEl.innerHTML = `시간당 +1원 증가<br>비용: ${Math.floor(scmoney ** 1.3)}원`;
+            }
+    function beg() {
+        money += perclick;
+        updateDisplay();
+        setInterval(() => {
+            document.getElementById("")
+        }, Math.floor(Math.random*1000));
+
+        const events = [
+            () => {if(event){
+                alert("동전을 주웠습니다. 100원 습득") 
+                money +=100;}
+            },
+            () => {
+                if(money > 5000) {
+                    alert("불량배를 만났습니다. 5000원 손실")
+                const modal = document.createElement("div");
+                modal.style.cssText = `
+                position: fixed;
+                top: 200px; left: 600px;
+                width: 150px; height: 150px;
+                background: rgba(0,0,0,0.6);
+                z-index: 10;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                `;
+                modal.innerHTML = `
+            <div style="
+                background: #fff;
+                padding: 20px;
+                border-radius: 12px;
+                text-align: center;
+                width: 600px;
+            ">
+                <img src="img/불량배.png" style="
+                    width: 400px;
+                    height: 400px;
+                    object-fit: cover;
+                    border-radius: 8px;
+                "><br><br>
+                <button id="close_btn" style="padding: 6px 20px; cursor: pointer;">닫기</button>
+            </div>
+        `;
+                document.body.appendChild(modal);
+                modal.querySelector("#close_btn").onclick = () => modal.remove();
+                modal.onclick = () => modal.remove();
+                money -= 5000;
+                }
+            }
+        ];
+
+        const randomEvent = events[Math.floor(Math.random() * events.length * 20)];
+        randomEvent();
+        
+    }
+
+    function begup() {
+        const cost = perclick * 2;
+        if(money < cost) {
+            return;
+        }
+        money -= cost;
+    perclick += 2;
+    updateDisplay();
+    }
+
+    function timeup() {
+        scmoney += 3;
+        const cost = scmoney + 3;
+        if(money < cost) {
+            return;
+        }
+        money -= cost;
+        persecond += 1;
+        updateDisplay();
+    }
+    setInterval(() => {
+        money += persecond;
+        moneyEl.innerHTML = `💰${money}원`;
+    }, 1000);
+
+    function alba() {
+    const cost = 100;
+    if (money < cost) return;
+    if (albaActive) return;  
+    money -= cost;
+    albaActive = true;
+    persecond += 10;
+    updateDisplay();
+    document.querySelector("#alba-info").innerHTML = `✅ 고용됨<br>+10원/초`;
+    
+    const img = document.createElement("img");
+    img.src = "img/웨이터.png";
+    img.style.width = "150px";
+    img.style.height = "150px"
+    img.style.position = "absolute";
+    img.style.left = "30px";
+    img.style.top = "450px";
+    document.querySelector("#begging").appendChild(img);
+
+    // const text = document.createElement("textarea");
+    // text.style.width = "160px";
+    // text.style.position = "absolute";
+    // text.style.left = "40px";
+    // text.style.top = "430px";
+    // // text.innerHTML = "금일의 구걸 수익입니다.";
+    // document.querySelector("#begging").appendChild(text);
+    }
+
+function alba2() {
+    const cost = 2000;
+    if (money < cost) return;
+    if (alba2Active) return;
+    money -= cost;
+    alba2Active = true;
+    persecond += 300;
+    updateDisplay();
+    document.querySelector("#alba2-info").innerHTML = `✅ 고용됨<br>+300원/초`;
+    
+    const img = document.createElement("img");
+    img.src = "img/신문배달.png";
+    img.style.width = "150px";
+    img.style.height = "150px"
+    img.style.position = "absolute";
+    img.style.left = "40%";
+    img.style.top = "70%";
+    img.style.transition = "left 1s linear";
+    document.querySelector("#begging").appendChild(img);
+
+    let going = true;
+
+    setInterval(() => {
+        if(going) {
+            img.style.left = "70%"
+            img.style.transform = "translate(-50%, -50%) scaleX(1)";
+        } else {
+            img.style.left = "30%"
+            img.style.transform = "translate(-50%, -50%) scaleX(-1)";
+        } going = !going;
+        img.style.transform = going ? "scaleX(-1)" : "scaleX(1)";
+    }, 1500);
+}
+
+function alba3() {
+    const cost = 300000;
+    if(money < cost) return;
+    if(alba3Active) return;
+    money -= cost;
+    alba3Active = true;
+    persecond += 1000;
+    updateDisplay();
+    document.querySelector("#alba3-info").innerHTML = `✅ 구매완료<br>+1000원/초`
+
+    const img = document.createElement("img");
+    img.src = "img/삼성.jpg";
+    img.style.width = "100px";
+    img.style.height = "100px";
+    img.style.position = "absolute";
+    img.style.left = "0px";
+    img.style.top = "60px";
+    document.querySelector("#begging").appendChild(img);
+}
+function alba4() {
+    const cost = 500000;
+    if(money < cost) return;
+    if(alba4Active) return;
+    money -= cost;
+    alba4Active = true;
+    persecond += 5000;
+    updateDisplay();
+    document.querySelector("#alba4-info").innerHTML = `✅ 구매완료<br>+5000원/초`
+
+    const img = document.createElement("img");
+    img.src = "img/하이닉스.jpg";
+    img.style.width = "100px";
+    img.style.height = "100px";
+    img.style.position = "absolute";
+    img.style.left = "0px";
+    img.style.top = "160px";
+    document.querySelector("#begging").appendChild(img);
+}
+
+function alba5() {
+    const cost = 1000000;
+    if(money < cost) return;
+    if(alba5Active) return;
+    money -= cost;
+    alba5Active = true;
+    persecond += 100000;
+    updateDisplay();
+    document.querySelector("#alba5-info").innerHTML = `✅ 구매완료<br>+100,000원/초`
+
+    const img = document.createElement("img");
+    img.src = "img/시그니엘.jpg";
+    img.style.width = "100px";
+    img.style.height = "100px";
+    img.style.position = "absolute";
+    img.style.right = "0px";
+    img.style.top = "60px";
+    document.querySelector("#begging").appendChild(img);
+}
+
+function alba6() {
+    const cost = 10000000;
+    if(money < cost) return;
+    if(alba6Active) return;
+    money -= cost;
+    alba6Active = true;
+    persecond += 100000;
+    updateDisplay();
+    document.querySelector("#alba6-info").innerHTML = `✅ 구매완료<br>+1,000,000원/초`
+
+    const img = document.createElement("img");
+    img.src = "img/청와대.jpg";
+    img.style.width = "100px";
+    img.style.height = "100px";
+    img.style.position = "absolute";
+    img.style.right = "0px";
+    img.style.top = "160px";
+    document.querySelector("#begging").appendChild(img);
+}
+
+function alba7() {
+    const cost = 200000000;
+    if(money < cost) return;
+    if(alba7Active) return;
+    money -= cost;
+    alba7Active = true;
+    persecond += 300000;
+    updateDisplay();
+    document.querySelector("#alba7-info").innerHTML = `✅ 구매완료<br>+3,000,000원/초`
+
+    const img = document.createElement("img");
+    img.src = "img/나이지리아.jpg";
+    img.style.width = "100px";
+    img.style.height = "100px";
+    img.style.position = "absolute";
+    img.style.left = "40%";
+    img.style.top = "8%";
+    document.querySelector("#begging").appendChild(img);
+}
+function alba8() {
+    const cost = 500000000;
+    if(money < cost) return;
+    if(alba8Active) return;
+    money -= cost;
+    alba8Active = true;
+    persecond += 10000000;
+    updateDisplay();
+    document.querySelector("#alba8-info").innerHTML = `✅ 구매완료<br>+10,000,000원/초`
+
+    const img = document.createElement("img");
+    img.src = "img/미국.jpg";
+    img.style.width = "100px";
+    img.style.height = "100px";
+    img.style.position = "absolute";
+    img.style.left = "50%";
+    img.style.top = "8%";
+    document.querySelector("#begging").appendChild(img);
+}
+
+function alba9() {
+    const cost = 5000;
+    if (money < cost) return;
+    if (alba9Active) return;  
+    money -= cost;
+    albaActive = true;
+    persecond += 500;
+    updateDisplay();
+    document.querySelector("#alba9-info").innerHTML = `✅ 고용됨<br>+500원/초`;
+    
+    const img = document.createElement("img");
+    img.src = "img/피아노.png";
+    img.style.width = "150px";
+    img.style.height = "150px"
+    img.style.position = "absolute";
+    img.style.right = "43px";
+    img.style.top = "450px";
+    document.querySelector("#begging").appendChild(img);
+}
+    </script>
+    
+    <div class="tail" id="item">
+    <div class="item-slot" id="al">
+        <div class="first">
+        <input type="button" value="알바" onclick="alba()">
+        <span id="alba-info">수입: 10원/초<br>비용: 100원</span>
+        </div>
+        <div class="first">
+        <input type="button" value="신문배달" onclick="alba2()">
+        <span id="alba2-info">수입: 300원/초<br>비용: 2000원</span>
+        </div>
+        <div class="first">
+        <input type="button" value="피아노 연주" onclick="alba9()">
+        <span id="alba9-info">수입: 500원/초<br>비용: 5000원</span>
+        </div>
+    </div>
+    <div class="item-slot">
+        <input type="button" id="btn_open" value="미니게임">
+        <div id="area"></div>
+        <script>
+        let nwin;
+        document.getElementById("btn_open").addEventListener('click',() => {
+            let width = 480;
+            let height = 360;
+            let left = (screen.width - width) / 2;
+            let top = (screen.heigth = height) / 2;
+            let feature = `width=${width},heigth=${height},left=${left},top=${top}`;
+            nwin = window.open('슈퍼헥사곤.html','',feature);
+        })
+        </script>
+    </div>
+    <div class="item-slot" id="stack">
+        <div class="stack_item">
+        <input type="button" value="삼성전자 구입" onclick="alba3()">
+        <span id="alba3-info">수입: 2,000원/초<br>비용: 300,000원</span>
+        </div>
+        <div class="stack_item">
+        <input type="button" value="SK하이닉스 구입" onclick="alba4()">
+        <span id="alba4-info">수입: 5,000원/초<br>비용: 500,000원</span>
+        </div>
+    </div>
+    <div class="item-slot" id="realest">
+        <div class="realestate">
+        <input type="button" value="시그니엘 구입" onclick="alba5()">
+        <span id="alba5-info">수입: 100,000원/초<br>비용: 1,000,000원</span>
+        </div>
+        <div class="realestate">
+        <input type="button" value="청와대 구입" onclick="alba6()">
+        <span id="alba6-info">수입: 1,000,000원/초<br>비용: 10,000,000원</span>
+        </div>
+    </div>
+    <div class="item-slot" id="country">
+        <div class="cty">
+        <input type="button" value="나이지리아 구입" onclick="alba7()">
+        <span id="alba7-info">수입: 3,000,000원/초<br>비용: 200,000,000원</span>
+        </div>
+        <div class="cty">
+        <input type="button" value="미국 구입" onclick="alba8()">
+        <span id="alba8-info">수입: 10,000,000원/초<br>비용: 500,000,000원</span>
+        </div>
+    </div>
+    <div class="item-slot">Update 예정</div>
+</div>
+
+</body>
+</html>

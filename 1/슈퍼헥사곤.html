@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Super Hexagon</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    font-family: monospace;
+    overflow: hidden;
+  }
+  canvas { display: block; }
+  #ui {
+    position: absolute;
+    top: 20px;
+    color: #fff;
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  #msg {
+    position: absolute;
+    color: #fff;
+    font-size: 28px;
+    letter-spacing: 6px;
+    text-align: center;
+    text-shadow: 0 0 20px currentColor;
+  }
+</style>
+</head>
+<body>
+<iframe id="bgm" src="" style="display:none" allow="autoplay"></iframe>
+<div id="ui">TIME: <span id="timer">0.0</span></div>
+<canvas id="c"></canvas>
+<div id="msg">PRESS SPACE TO START</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const timerEl = document.getElementById('timer');
+const msgEl = document.getElementById('msg');
+
+canvas.width = 600;
+canvas.height = 600;
+
+const CX = canvas.width / 2;
+const CY = canvas.height / 2;
+const SIDES = 6;
+const PLAYER_DIST = 50;
+const PLAYER_SIZE = 10;
+const WALL_SPEED = 3;
+const GAP = 80;
+
+let angle = 0;        // 회전각
+let playerAngle = 0;  // 플레이어 위치 
+let walls = [];
+let running = false;
+let elapsed = 0;
+let lastTime = 0;
+let hue = 0;
+let spawnTimer = 0;
+
+// 색상
+const palettes = [
+  ['#ff006e','#fb5607','#ffbe0b'],
+  ['#3a86ff','#8338ec','#ff006e'],
+  ['#06d6a0','#118ab2','#073b4c'],
+  ['#f72585','#7209b7','#3a0ca3'],
+];
+let palette = palettes[0];
+
+function sideAngle(i) {
+  return (i / SIDES) * Math.PI * 2;
+}
+
+function spawnWall() {
+  // 랜덤 사이드 하나에 구멍
+  const gapSide = Math.floor(Math.random() * SIDES);
+  walls.push({ r: 400, gapSide });
+}
+
+function drawHexagon(r, color) {
+  ctx.beginPath();
+  for (let i = 0; i < SIDES; i++) {
+    const a = sideAngle(i) + angle;
+    const x = CX + r * Math.cos(a);
+    const y = CY + r * Math.sin(a);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+function drawWalls() {
+  walls.forEach(w => {
+    for (let i = 0; i < SIDES; i++) {
+      if (i === w.gapSide) continue; // 구멍
+
+      const a1 = sideAngle(i) + angle;
+      const a2 = sideAngle(i + 1) + angle;
+      const r1 = w.r;
+      const r2 = w.r + 20;
+
+      ctx.beginPath();
+      ctx.moveTo(CX + r1 * Math.cos(a1), CY + r1 * Math.sin(a1));
+      ctx.lineTo(CX + r2 * Math.cos(a1), CY + r2 * Math.sin(a1));
+      ctx.lineTo(CX + r2 * Math.cos(a2), CY + r2 * Math.sin(a2));
+      ctx.lineTo(CX + r1 * Math.cos(a2), CY + r1 * Math.sin(a2));
+      ctx.closePath();
+      ctx.fillStyle = palette[i % palette.length];
+      ctx.fill();
+    }
+  });
+}
+
+function drawPlayer() {
+  const a = playerAngle + angle;
+  const px = CX + PLAYER_DIST * Math.cos(a);
+  const py = CY + PLAYER_DIST * Math.sin(a);
+
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(a + Math.PI / 2);
+  ctx.beginPath();
+  ctx.moveTo(0, -PLAYER_SIZE);
+  ctx.lineTo(PLAYER_SIZE * 0.7, PLAYER_SIZE * 0.7);
+  ctx.lineTo(-PLAYER_SIZE * 0.7, PLAYER_SIZE * 0.7);
+  ctx.closePath();
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBackground() {
+  // 배경 삼각형 조각들
+  for (let i = 0; i < SIDES; i++) {
+    const a1 = sideAngle(i) + angle;
+    const a2 = sideAngle(i + 1) + angle;
+    ctx.beginPath();
+    ctx.moveTo(CX, CY);
+    ctx.lineTo(CX + 600 * Math.cos(a1), CY + 600 * Math.sin(a1));
+    ctx.lineTo(CX + 600 * Math.cos(a2), CY + 600 * Math.sin(a2));
+    ctx.closePath();
+    ctx.fillStyle = i % 2 === 0
+      ? `hsl(${hue}, 40%, 8%)`
+      : `hsl(${hue}, 40%, 12%)`;
+    ctx.fill();
+  }
+}
+
+function checkCollision() {
+  const playerSide = Math.floor(
+    ((playerAngle % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2 / SIDES)
+  );
+
+  for (const w of walls) {
+    if (w.r - 20 < PLAYER_DIST + PLAYER_SIZE && w.r + 20 > PLAYER_DIST - PLAYER_SIZE) {
+      if (playerSide !== w.gapSide) return true;
+    }
+  }
+  return false;
+}
+
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === ' ' && !running) startGame();
+  e.preventDefault();
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+function startGame() {
+  running = true;
+  elapsed = 0;
+  walls = [];
+  playerAngle = 0;
+  spawnTimer = 0;
+  palette = palettes[Math.floor(Math.random() * palettes.length)];
+  msgEl.style.display = 'none';
+  lastTime = performance.now();
+
+  const bgm = document.querySelector("#bgm");
+    bgm.src = "https://www.youtube.com/embed/wD3j1O1XHQY?autoplay=1&loop=1&playlist=wD3j1O1XHQY&controls=0";
+
+  requestAnimationFrame(loop);
+}
+
+function gameOver() {
+  running = false;
+  msgEl.innerHTML = `GAME OVER<br><span style="font-size:16px;opacity:0.7">TIME: ${elapsed.toFixed(1)}s &nbsp; SPACE TO RETRY</span>`;
+  msgEl.style.display = 'block';
+}
+
+function loop(now) {
+  if (!running) return;
+
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+  elapsed += dt;
+  hue = (hue + 60 * dt) % 360;
+
+  // 속도 점점 빨라짐
+  // 배수로 조절
+  const speed = WALL_SPEED + elapsed * 0.3;
+  const rotSpeed = 1.5 + elapsed * 0.05;
+
+  // 플레이어 속도 조절
+  if (keys['ArrowLeft'] || keys['a']) playerAngle -= rotSpeed * dt * 4;
+  if (keys['ArrowRight'] || keys['d']) playerAngle += rotSpeed * dt * 4;
+
+  // 배경 회전
+  angle += rotSpeed * dt * (Math.sin(elapsed * 0.3) > 0 ? 1 : -1);
+
+  // 벽 생성
+  spawnTimer += dt;
+  if (spawnTimer > 1.2 - Math.min(elapsed * 0.02, 0.8)) {
+    spawnWall();
+    spawnTimer = 0;
+  }
+
+  // 벽 이동
+  walls.forEach(w => w.r -= speed);
+  walls = walls.filter(w => w.r > 20);
+
+  // 충돌 감지
+  if (checkCollision()) { gameOver(); return; }
+
+  // 그리기
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawBackground();
+  drawWalls();
+  drawHexagon(30, `hsl(${hue}, 80%, 70%)`);
+  drawPlayer();
+
+  timerEl.textContent = elapsed.toFixed(1);
+  requestAnimationFrame(loop);
+}
+
+// 초기 화면
+ctx.fillStyle = '#000';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+drawBackground();
+drawHexagon(30, '#fff');
+</script>
+</body>
+</html>

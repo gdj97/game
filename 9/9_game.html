@@ -53,7 +53,7 @@
         position: absolute;
         color: yellow;
         opacity: 0;
-        animation: fadeInBullet 0.5s ease-out forwards;
+        animation: fadeInBullet 0.5s ease-out forwards; /* 키프레임명 속도 감속 상태고정 */
         box-shadow: 0 0 30px 3px yellow;
     }
     .bullet.out { animation: fadeOutBullet 1s ease-out forwards; }
@@ -504,6 +504,7 @@
                 player.style.opacity = "1";
             }, 1000);
             spawnTimers.push(timeoutId);
+            spawnTimers.push(blink);
         }
         // 피격 로직
         function hit(b) {
