@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<!-- 
+    DOCTYPE: 이 문서가 HTML5 형식임을 브라우저에게 알려주는 선언.
+    없으면 브라우저가 오래된 방식(quirks mode)으로 렌더링할 수 있음.
+-->
+<html lang="ko">
+<!-- lang="ko": 이 페이지의 언어가 한국어임을 명시. 스크린리더, 검색엔진에 영향 -->
+
+<head>
+    <meta charset="UTF-8">
+    <!-- charset="UTF-8": 문자 인코딩 설정. 한글 등 다국어 문자를 올바르게 표시하기 위해 필수 -->
+    <title>TEN GRID</title>
+    <!-- title: 브라우저 탭에 표시되는 페이지 제목 -->
+
+    <style>
+        /* =====================
+           CSS: 요소의 시각적 스타일을 지정하는 언어
+           선택자 { 속성: 값; } 형태로 작성
+        ===================== */
+
+        /* body: 전체 페이지의 기본 스타일 */
+        body {
+            font-family: 'Arial Black', sans-serif;
+            /* 'Arial Black': 두껍고 임팩트 있는 폰트 → 게임 느낌
+               sans-serif: Arial Black이 없을 경우 대체 폰트 */
+            text-align: center;
+            background: #1a1a2e;
+            /* 어두운 네이비 배경 → 게임 화면 느낌
+               hex 코드 #1a1a2e: 빨강(1a) 초록(1a) 파랑(2e) */
+            color: white;            /* 기본 글자색 흰색 */
+            padding: 20px;           /* 페이지 전체 안쪽 여백 */
+            min-height: 100vh;
+            /* 100vh: viewport height의 100% → 화면 높이를 꽉 채움
+               min-height: 최소 높이 지정 (내용이 적어도 배경이 채워짐) */
+            box-sizing: border-box;
+            /* box-sizing: border-box → padding을 포함해서 크기 계산
+               기본값(content-box)은 padding이 크기에 추가됨 */
+        }
+
+        /* =====================
+           제목 스타일
+        ===================== */
+        h2 {
+            font-size: 48px;            /* 크고 임팩트 있는 제목 크기 */
+            letter-spacing: 10px;       /* 글자 간격을 넓혀 게임 로고 느낌 */
+            color: tomato;              /* 셀과 같은 tomato 색상으로 통일감 */
+            text-shadow:
+                0 0 10px rgba(255, 99, 71, 0.8),
+                0 0 30px rgba(255, 99, 71, 0.4);
+            /*
+                text-shadow: 글자에 그림자(빛 번짐) 효과 추가
+                형식: x오프셋 y오프셋 흐림반경 색상
+                0 0 → 정중앙에서 퍼지는 빛 번짐 (네온 글로우 효과)
+                rgba(255,99,71,0.8): tomato색 + 투명도 0.8 (진한 빛)
+                rgba(255,99,71,0.4): tomato색 + 투명도 0.4 (넓게 퍼지는 빛)
+                두 개 겹쳐서 더 풍부한 네온 효과 연출
+            */
+            margin: 10px 0 20px;
+            /* margin: 위 10px, 좌우 0, 아래 20px */
+        }
+
+        /* =====================
+           점수 / 타이머 공통 스타일
+        ===================== */
+        #score {
+            /* 쉼표로 여러 선택자에 동시 적용 */
+            display: inline-block;
+            /* inline-block: 블록처럼 크기를 가지면서 나란히 배치 가능 */
+            background: #16213e;
+            /* 배경과 비슷하지만 살짝 밝은 색으로 패널 느낌 */
+            border: 2px solid tomato;
+            /* border: 테두리 두께 스타일 색상
+               2px solid tomato → 토마토색 실선 2px 테두리 */
+            border-radius: 10px;        /* 셀과 같은 둥근 모서리 */
+            padding: 8px 20px;          /* 안쪽 여백 */
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            margin: 4px 8px 12px;       /* 위 4px, 좌우 8px, 아래 12px */
+            letter-spacing: 2px;        /* 글자 간격 살짝 넓힘 */
+        }
+
+
+        /* 점수 패널만 추가 강조 */
+        #score {
+            color: orange;
+            /* 점수는 orange로 표시 → active 셀 색상과 통일감 */
+            border-color: orange;       /* 테두리도 orange로 */
+            text-shadow: 0 0 8px rgba(255,165,0,0.6);
+            /* 오렌지색 글로우 효과 */
+        }
+
+        /* 타이머 바 컨테이너 */
+        #timer {
+            display: block;
+            width: 350px;               /* 보드 너비와 맞춤 (10열 × 35px) */
+            margin: 4px auto 12px;      /* 가운데 정렬 */
+            padding: 0;
+            border: none;
+            background: transparent;
+            text-align: left;
+        }
+
+        /* 타이머 라벨 텍스트 */
+        #timer-label {
+            font-size: 12px;
+            color: tomato;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 6px rgba(255, 99, 71, 0.6);
+        }
+
+        /* 바의 바깥 틀 (회색 배경 트랙) */
+        #timer-track {
+            width: 100%;
+            height: 14px;
+            background: #16213e;        /* 어두운 배경 → 빈 트랙 */
+            border: 2px solid tomato;
+            border-radius: 8px;
+            overflow: hidden;
+            /*
+                overflow: hidden → 자식 요소(#timer-bar)가
+                border-radius 밖으로 삐져나오지 않게 잘라냄
+            */
+        }
+
+        /* 실제로 줄어드는 색상 바 */
+        #timer-bar {
+            height: 100%;
+            width: 100%;                /* JS에서 남은비율에 따라 조절 */
+            background: tomato;
+            border-radius: 6px;
+            transition: width 0.9s linear, background 0.5s;
+            /*
+                transition: width 0.9s linear
+                → width가 바뀔 때 0.9s 동안 일정 속도(linear)로 부드럽게 줄어듦
+                background 0.5s → 색상 변화도 0.5초에 걸쳐 서서히 바뀜
+            */
+        }
+
+        /* 10초 이하: 바 색상을 빨간색으로 + 깜빡임 */
+        #timer-bar.danger {
+            background: red;
+            animation: barPulse 0.6s infinite;
+        }
+
+        @keyframes barPulse {
+            /* 바가 밝아졌다 어두워지며 긴박감을 표현 */
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.5; }
+        }
+
+        /* #game: id가 "game"인 요소를 선택하는 CSS ID 선택자 */
+        #game {
+            display: grid;
+            /* display: grid → 자식 요소들을 격자(grid) 형태로 배치 */
+
+            grid-template-columns: repeat(10, 35px);
+            /*
+                repeat(10, 35px): 35px 너비의 열을 10개 만든다.
+                → 10열짜리 격자가 만들어짐.
+                gap을 쓰지 않고 셀 크기를 35px로 키워서
+                시각적으로 5px 여백처럼 보이게 하는 트릭.
+                실제 클릭 영역은 35px로 꽉 참 → 빈틈 없이 드래그 가능
+            */
+
+            justify-content: center; /* 그리드 전체를 가로 기준 가운데 정렬 */
+            margin-top: 20px;        /* 위쪽에 20px 바깥 여백 추가 */
+        }
+
+        /* .cell: class가 "cell"인 모든 요소를 선택하는 CSS 클래스 선택자 */
+        /* 역할: 실제 마우스가 클릭/드래그를 감지하는 영역 (투명, 35x35) */
+        .cell {
+            width: 35px;   /* 가로 35px → 클릭 감지 영역 */
+            height: 35px;  /* 세로 35px → 클릭 감지 영역 */
+            display: flex;           /* 자식 요소(.cell-inner)를 flex 배치 */
+            justify-content: center; /* 자식을 가로 기준 가운데 */
+            align-items: center;     /* 자식을 세로 기준 가운데 */
+            cursor: pointer;   /* 마우스를 올리면 손가락 커서로 변경 */
+            user-select: none; /* 드래그 중 텍스트가 선택되는 것을 막음 */
+        }
+
+        /* .cell-inner: 실제로 눈에 보이는 빨간 박스 (30x30) */
+        /* .cell(35px) 안에 들어가서 상하좌우 2.5px씩 여백이 생겨 gap처럼 보임 */
+        .cell-inner {
+            width: 30px;        /* 보이는 크기는 30px */
+            height: 30px;
+            background: tomato; /* 배경색을 토마토(빨간색 계열)로 지정 */
+            color: white;       /* 글자색 흰색 */
+            font-weight: bold;  /* 글자 굵게 */
+            font-size: 20px;    /* 글자 크기 20px */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;    /* 모서리를 10px만큼 둥글게 */
+            pointer-events: none;
+            /*
+                pointer-events: none → 이 요소는 마우스 이벤트를 무시하고
+                부모(.cell)에게 이벤트가 전달되도록 함.
+                이게 없으면 .cell-inner 위에서 클릭 시 이벤트가 여기서 멈춰버림.
+            */
+        }
+
+        /* .active .cell-inner: .active 클래스가 붙은 .cell 안의 .cell-inner */
+        /* 드래그로 선택된 셀의 색상을 오렌지로 바꿔서 시각적 피드백 제공 */
+        .active .cell-inner {
+            background: orange;
+        }
+
+        /* .empty: 숫자가 사라진(제거된) 빈 셀 */
+        .empty {
+            cursor: default; /* 빈 셀에서는 커서를 기본 화살표로 */
+        }
+
+        /* .empty .cell-inner: 빈 셀의 내부 박스는 회색으로 표시 */
+        .empty .cell-inner {
+            background: #ddd; /* #ddd는 밝은 회색 (hex 색상코드) */
+        }
+
+
+
+        /* =====================
+           버튼 스타일: 셀과 동일한 느낌으로 꾸밈
+           .cell-inner와 같은 tomato 배경 + border-radius + 굵은 글씨
+        ===================== */
+        #startBtn {
+            background: tomato;         /* 셀과 같은 tomato 배경색 */
+            color: white;               /* 흰색 글자 */
+            font-weight: bold;          /* 굵은 글씨 */
+            font-size: 16px;            /* 글자 크기 */
+            padding: 10px 28px;         /* 안쪽 여백: 위아래 10px, 좌우 28px */
+            border: none;               /* 기본 버튼 테두리 제거 */
+            border-radius: 10px;        /* 셀과 동일하게 모서리 둥글게 */
+            cursor: pointer;            /* 마우스 올리면 손가락 커서 */
+            user-select: none;          /* 텍스트 드래그 선택 방지 */
+            margin: 12px 0;             /* 위아래 바깥 여백 */
+            transition: background 0.15s, transform 0.1s;
+            /* transition: 속성 변화를 부드럽게 애니메이션 처리
+               background → 색상이 바뀔 때 0.15초 동안 서서히 변함
+               transform  → 크기/위치 변화가 0.1초 동안 부드럽게 적용됨 */
+        }
+
+        /* 마우스를 버튼 위에 올렸을 때 */
+        #startBtn:hover {
+            background: orangered;      /* hover 시 좀 더 진한 색으로 변경 */
+            /* :hover → 마우스가 요소 위에 있을 때만 적용되는 CSS 가상 클래스 */
+        }
+
+        /* 버튼을 누르고 있는 순간 */
+        #startBtn:active {
+            transform: scale(0.94);
+            /* transform: scale(0.94) → 요소를 94% 크기로 줄임
+               → 버튼이 눌리는 느낌(꾹 누르는 효과)을 시각적으로 표현 */
+            background: orangered;
+            /* :active → 마우스 버튼이 눌린 순간에만 적용되는 CSS 가상 클래스 */
+        }
+        /* =====================
+           결과 화면 스타일
+        ===================== */
+        #result {
+            margin-top: 20px;
+        }
+
+        /* 결과 카드 전체 박스 */
+        .result-card {
+            display: inline-block;
+            background: #16213e;
+            border: 2px solid tomato;
+            border-radius: 14px;
+            padding: 28px 48px;
+            text-align: center;
+        }
+
+        /* 종료 제목 */
+        .result-card h2 {
+            font-size: 32px;
+            color: tomato;
+            letter-spacing: 6px;
+            margin: 0 0 24px;
+            text-shadow: 0 0 12px rgba(255,99,71,0.8);
+        }
+
+        /* 각 항목 행: 라벨 위, 값 아래로 세로 배치 */
+        .result-row {
+            display: flex;
+            flex-direction: column;
+            /* flex-direction: column → 자식을 위→아래 세로로 쌓음 */
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        /* 항목 라벨 */
+        .result-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #8892a4;
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            /* text-transform: uppercase → 텍스트를 모두 대문자로 표시 */
+        }
+
+        /* 점수 값 박스 */
+        .result-value {
+            font-size: 52px;
+            /* 숫자를 크게 키워 한눈에 들어오게 */
+            font-weight: bold;
+            letter-spacing: 4px;
+            line-height: 1;
+            padding: 12px 32px;
+            border-radius: 10px;
+            /* 셀과 동일한 border-radius로 통일감 */
+            min-width: 180px;
+        }
+
+        .result-value.score-val {
+            color: orange;
+            background: rgba(255, 165, 0, 0.1);
+            /* rgba: 오렌지색에 투명도 0.1을 줘서 은은한 배경 */
+            border: 2px solid rgba(255, 165, 0, 0.5);
+            text-shadow:
+                0 0 12px rgba(255, 165, 0, 0.9),
+                0 0 30px rgba(255, 165, 0, 0.4);
+            /* 두 겹의 text-shadow로 강한 네온 글로우 효과 */
+        }
+
+        .result-value.cells-val {
+            color: tomato;
+            background: rgba(255, 99, 71, 0.1);
+            border: 2px solid rgba(255, 99, 71, 0.5);
+            text-shadow:
+                0 0 12px rgba(255, 99, 71, 0.9),
+                0 0 30px rgba(255, 99, 71, 0.4);
+        }
+
+        /* 구분선 */
+        .result-divider {
+            border: none;
+            border-top: 1px solid #2a2a4a;
+            margin: 18px 0;
+        }
+
+        /* 두 항목을 가로로 나란히 배치하는 래퍼 */
+        .result-cols {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>TEN GRID</h2>
+    <!-- h2: 두 번째 수준 제목 태그. 숫자가 클수록 작은 제목(h1~h6) -->
+
+    <!-- stats-panel: 점수와 타이머를 묶는 컨테이너
+         게임 중에만 표시, 게임 전/후에는 숨김 -->
+    <div id="stats-panel" style="display:none;">
+        <div id="score">점수: 0</div>
+        <!-- id="score": JS에서 getElementById("score")로 이 요소를 찾아 점수를 업데이트함 -->
+
+        <div id="timer">
+            <!-- 타이머 바 구조:
+                 timer-label: "남은 시간 60s" 텍스트 표시
+                 timer-track: 회색 트랙 배경 (바의 틀)
+                 timer-bar: 실제로 줄어드는 색상 바
+            -->
+            <div id="timer-label">남은 시간 60s</div>
+            <div id="timer-track">
+                <div id="timer-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <button id="startBtn">게임 시작</button>
+    <!-- button: 클릭 가능한 버튼. id="startBtn"으로 JS에서 클릭 이벤트를 연결 -->
+
+    <div id="game"></div>
+    <!-- id="game": 게임 보드가 들어갈 컨테이너. JS의 render()가 이 안에 셀을 채워넣음 -->
+
+    <div id="result"></div>
+    <!-- id="result": 게임 종료 후 최종 점수 메시지가 표시될 영역 -->
+
+
+    <script>
+        /*
+            <script> 태그: 브라우저가 JavaScript 코드를 실행하는 영역.
+            HTML 파싱이 끝난 후 실행되도록 body 맨 아래에 위치시키는 것이 일반적.
+        */
+
+        // =====================
+        // 전역 변수 (Global Variables)
+        // =====================
+        /*
+            전역 변수: 함수 바깥에 선언되어 파일 어디서든 접근 가능한 변수.
+            게임의 "상태(state)"를 저장하는 역할을 한다.
+            let: 나중에 값을 바꿀 수 있는 변수 선언 키워드 (블록 스코프)
+            const: 한 번 선언하면 재할당 불가능한 상수 선언 키워드
+        */
+
+        let board = [];
+        /*
+            board: 게임판 전체 상태를 저장하는 2차원 배열(배열 속의 배열).
+            board[r][c] → r번째 행, c번째 열의 숫자값을 의미.
+            예: board[0][0] = 3  → 0행 0열에 숫자 3이 있음
+            셀이 제거되면 해당 위치를 0으로 바꿈.
+            [] → 빈 배열로 초기화 (나중에 createBoard에서 채워짐)
+        */
+
+        let score = 0;
+        /*
+            score: 현재 플레이어의 점수.
+            합이 10인 조합을 완성할 때마다 1씩 증가.
+            0으로 초기화 → 게임 시작 시 점수를 0부터 시작
+        */
+
+        let time;
+        /*
+            time: 남은 시간(초 단위).
+            startTimer()에서 매 1초마다 1씩 감소.
+            0이 되면 endGame()이 호출되어 게임 종료.
+        */
+
+        let timerInterval = null;
+        /*
+            timerInterval: setInterval()이 반환하는 ID값을 저장.
+            setInterval은 반복 실행되는 타이머를 만들고, 그 "핸들(handle)"을 반환함.
+            이 값을 clearInterval(timerInterval)에 넘겨야 타이머를 멈출 수 있음.
+            null로 초기화 → 아직 타이머가 없다는 의미
+        */
+
+        let isDragging = false;
+        /*
+            isDragging: 현재 마우스 버튼이 눌린 채로 드래그 중인지 나타내는 플래그(flag).
+            boolean 타입: true(드래그 중) / false(드래그 아님)
+            mousedown → true로 바뀜
+            mouseup   → false로 바뀜
+            dragging() 함수에서 이 값이 false면 아무 동작도 하지 않음.
+            → 마우스를 누르지 않고 그냥 셀 위를 지나갈 때 선택되는 것을 방지
+        */
+
+        let selected = [];
+        /*
+            selected: 현재 드래그로 선택된 셀들의 좌표를 저장하는 배열.
+            각 요소는 { r: 행번호, c: 열번호 } 형태의 객체(object).
+            예: selected = [ {r:0, c:0}, {r:0, c:1}, {r:0, c:2} ]
+            드래그가 끝날 때 이 배열을 순회하며 셀을 제거함.
+        */
+
+        let sum = 0;
+        /*
+            sum: 현재 선택된 셀들의 숫자 합계.
+            셀을 선택할 때마다 누적해서 더함.
+            sum === 10 이 되면 선택된 셀들을 제거하고 점수 획득.
+        */
+
+        let removedCells = 0;
+        /*
+            removedCells: 게임 중 제거한 숫자 셀의 누적 개수.
+            빈 칸(empty)을 통과한 것은 포함하지 않음.
+            endDrag()에서 filledCount만큼 더해지고,
+            게임 종료 화면에 표시됨.
+        */
+
+        const startBtn = document.querySelector("#startBtn");
+        /*
+            document.querySelector(선택자): CSS 선택자로 HTML 요소 하나를 찾아 반환.
+            "#startBtn" → id가 startBtn인 요소를 찾음.
+            const: 이 변수는 한 번 할당 후 다시 할당하지 않으므로 const 사용.
+            → 이후 startBtn.addEventListener(...)로 클릭 이벤트를 연결
+        */
+
+
+        // =====================
+        // 보드 생성 함수
+        // =====================
+        /*
+            function 키워드: 재사용 가능한 코드 블록(함수)을 정의.
+            함수명(): 함수를 호출(실행)하는 방법.
+            createBoard(): 게임판을 새로 만들어 board 전역 변수에 저장.
+        */
+        function createBoard() {
+            board = [];
+            // board를 빈 배열로 초기화. 이전 게임 데이터를 완전히 지움.
+
+            for (let r = 0; r < 10; r++) {
+                /*
+                    for 루프: 반복 실행 구조.
+                    let r = 0  → 시작값: r을 0으로 초기화
+                    r < 10     → 조건: r이 10보다 작을 동안 반복 (0~9, 총 10번)
+                    r++        → 증감: 매 반복 후 r을 1 증가
+                    → 10개의 행(row)을 만들기 위한 바깥 루프
+                */
+
+                let row = [];
+                // 한 행을 담을 빈 배열 생성. 안쪽 루프가 끝나면 숫자 10개가 채워짐.
+
+                for (let c = 0; c < 10; c++) {
+                    // 10개의 열(column)을 만들기 위한 안쪽 루프 (이중 for문)
+
+                    let randomNumber = Math.floor(Math.random() * 9) + 1;
+                    /*
+                        Math.random()   → 0 이상 1 미만의 실수 반환 (예: 0.731...)
+                        * 9             → 0 이상 9 미만의 실수 (예: 6.58...)
+                        Math.floor(...) → 소수점 버림 → 0~8 정수
+                        + 1             → 1~9 정수로 범위 조정
+                        결과: 1~9 사이의 랜덤 정수
+                    */
+
+                    row.push(randomNumber);
+                    /*
+                        배열.push(값): 배열의 맨 끝에 값을 추가하는 배열 메서드.
+                        → row 배열에 랜덤 숫자를 하나씩 추가
+                    */
+                }
+
+                board.push(row);
+                // 완성된 한 행(row)을 board 배열에 추가
+                // 안쪽 루프 10번이 끝나면 row에는 숫자 10개가 있음
+            }
+            // 바깥 루프 10번이 끝나면 board는 10개의 row를 가진 2차원 배열이 됨
+        }
+
+
+        // =====================
+        // 화면 그리기 함수
+        // =====================
+        /*
+            render(): board 배열을 읽어서 HTML 문자열을 만들고
+            #game 요소 안에 주입해 화면을 새로 그림.
+            상태(board)가 바뀔 때마다 호출해서 UI를 동기화하는 패턴.
+        */
+        function render() {
+
+            let html = "";
+            // 최종적으로 #game에 넣을 HTML 문자열을 담을 변수. 빈 문자열로 시작.
+
+            for (let r = 0; r < board.length; r++) {
+                // board.length: board 배열의 요소 개수 → 10 (행 수)
+
+                for (let c = 0; c < board[r].length; c++) {
+                    // board[r].length: r번째 행의 열 개수 → 10
+
+                    let value = board[r][c];
+                    // board[r][c]: r행 c열의 숫자값을 꺼내 value에 저장
+
+                    if (value === 0) {
+                        /*
+                            === : 값과 타입이 모두 같은지 비교하는 엄격한 동등 연산자.
+                            value === 0 → 셀이 제거된 상태 (빈 칸)
+                        */
+                        html += `<div class="cell empty" data-r="${r}" data-c="${c}"><div class="cell-inner"></div></div>`;
+                        /*
+                            += : 문자열 이어붙이기 (html = html + "...")
+                            백틱(`): 템플릿 리터럴. 문자열 안에 ${변수}로 값을 삽입 가능.
+                            class="cell empty": 두 클래스를 동시에 부여 → 빈 칸 스타일 적용
+                            data-r="${r}" data-c="${c}": HTML 커스텀 데이터 속성.
+                            → JS에서 element.dataset.r 로 읽어 어느 행/열인지 파악
+                        */
+                    } else {
+                        html += `
+                <div class="cell"
+                    data-r="${r}"
+                    data-c="${c}">
+                    <div class="cell-inner">${value}</div>
+                </div>`;
+                        // value가 0이 아닌 경우(숫자 셀): cell-inner 안에 숫자 표시
+                    }
+                }
+            }
+
+            document.getElementById("game").innerHTML = html;
+            /*
+                document.getElementById("game"): id="game"인 요소를 찾음.
+                .innerHTML = html: 그 요소의 내부 HTML 전체를 새 문자열로 교체.
+                → 화면이 board 상태에 맞게 완전히 새로 그려짐.
+                주의: innerHTML을 교체하면 기존 이벤트도 모두 사라짐
+                      → 반드시 addEvents()를 다시 호출해야 함.
+            */
+
+            addEvents();
+            // innerHTML 교체로 사라진 이벤트들을 새로 연결
+        }
+
+
+        // =====================
+        // 이벤트 연결 함수
+        // =====================
+        /*
+            addEvents(): 게임 보드의 모든 셀에 마우스 이벤트를 연결.
+            render() 호출 후 innerHTML이 새로 생성되면 이벤트가 사라지므로
+            render()가 끝날 때마다 이 함수를 호출해 이벤트를 재등록해야 함.
+        */
+        function addEvents() {
+            document.querySelectorAll(".cell").forEach(cell => {
+                /*
+                    document.querySelectorAll(".cell"): class가 "cell"인 모든 요소를 NodeList로 반환.
+                    .forEach(콜백함수): NodeList의 각 요소마다 콜백을 실행.
+                    화살표 함수(=>): function() {} 을 간단히 표현한 문법.
+                    cell => { ... }  는  function(cell) { ... } 와 동일
+                */
+
+                cell.addEventListener("mousedown", startDrag);
+                /*
+                    addEventListener(이벤트명, 핸들러함수):
+                    해당 요소에서 이벤트가 발생하면 핸들러 함수를 실행하도록 등록.
+                    "mousedown": 마우스 버튼을 누르는 순간 발생하는 이벤트
+                    → 누르는 순간 startDrag 함수 실행
+                */
+
+                cell.addEventListener("mouseenter", dragging);
+                /*
+                    "mouseenter": 마우스 커서가 해당 요소 영역 안으로 진입할 때 발생.
+                    → 드래그 중에 다른 셀로 마우스가 들어올 때 dragging 함수 실행
+                */
+            });
+
+            document.addEventListener("mouseup", endDrag);
+            /*
+                document 전체에 mouseup 이벤트 등록.
+                "mouseup": 마우스 버튼을 놓는 순간 발생.
+                셀 밖에서 버튼을 놓아도 드래그가 정상 종료되도록 document에 등록.
+            */
+
+            const boardDiv = document.getElementById("game");
+            boardDiv.addEventListener("mouseleave", () => {
+                /*
+                    "mouseleave": 마우스가 해당 요소(#game) 영역 밖으로 나갈 때 발생.
+                    () => { ... }: 매개변수 없는 화살표 함수
+                    → 드래그 중에 보드 밖으로 나가면 자동으로 드래그 종료
+                */
+                if (isDragging) endDrag();
+                // isDragging이 true일 때만 endDrag() 호출
+                // 드래그 중이 아닐 때 마우스가 보드를 벗어나는 건 무시
+            });
+        }
+
+
+        // =====================
+        // 드래그 시작 함수
+        // =====================
+        /*
+            startDrag(e): 셀 위에서 마우스 버튼을 누를 때 호출됨.
+            매개변수 e: 이벤트 객체(Event Object). 어느 요소에서 발생했는지 등의 정보를 담음.
+        */
+        function startDrag(e) {
+            if (e.currentTarget.classList.contains("empty")) return;
+            /*
+                e.currentTarget: 이벤트가 등록된 요소 (= 클릭된 .cell 요소)
+                .classList: 그 요소가 가진 클래스 목록
+                .contains("empty"): "empty" 클래스가 있으면 true 반환
+                → 빈 셀에서 드래그를 시작하면 아무것도 하지 않고 함수 종료 (return)
+                return: 함수를 즉시 종료하는 키워드 (조기 탈출 패턴)
+            */
+
+            isDragging = true;
+            // 드래그가 시작됐음을 플래그로 기록 → dragging()이 동작하도록 활성화
+
+            selected = [];
+            // 이전 드래그의 선택 목록을 초기화 (빈 배열로 리셋)
+
+            sum = 0;
+            // 이전 드래그의 합계도 0으로 리셋
+
+            let r = parseInt(e.currentTarget.dataset.r);
+            let c = parseInt(e.currentTarget.dataset.c);
+            /*
+                e.currentTarget.dataset.r: HTML의 data-r 속성값을 읽어옴 (문자열 타입)
+                parseInt(): 문자열을 정수(integer)로 변환. "3" → 3
+                → 클릭된 셀의 행(r)과 열(c) 번호를 숫자로 가져옴
+            */
+
+            selected.push({ r, c });
+            /*
+                { r, c }: 객체 단축 표기법. { r: r, c: c } 와 동일.
+                → 시작 셀의 좌표를 selected 배열에 추가
+            */
+
+            sum += board[r][c];
+            // += : sum = sum + board[r][c] 와 동일한 복합 대입 연산자
+            // 첫 번째 셀의 값을 sum에 더함
+
+            e.currentTarget.classList.add("active");
+            // classList.add("active"): 해당 요소에 "active" 클래스를 추가
+            // → CSS의 .active .cell-inner { background: orange } 가 적용되어 색상 변경
+        }
+
+
+        // =====================
+        // 드래그 중 함수
+        // =====================
+        /*
+            dragging(e): 마우스가 셀 위로 진입할 때마다 호출됨 (mouseenter).
+            isDragging이 true일 때만 실제로 처리함.
+        */
+        function dragging(e) {
+
+            if (!isDragging) return;
+            /*
+                !isDragging: isDragging의 반대값 (NOT 연산자 !)
+                isDragging이 false(드래그 중이 아님)이면 함수 즉시 종료
+                → 마우스를 누르지 않고 셀 위를 지나가는 경우를 무시
+            */
+
+            let r = parseInt(e.currentTarget.dataset.r);
+            let c = parseInt(e.currentTarget.dataset.c);
+            // 현재 마우스가 진입한 셀의 행(r), 열(c) 번호를 읽어옴
+
+            // ── 중복 선택 방지 알고리즘 ──
+            let already = selected.some(cell => cell.r === r && cell.c === c);
+            /*
+                배열.some(조건함수): 배열 요소 중 하나라도 조건을 만족하면 true 반환.
+                cell => cell.r === r && cell.c === c
+                → selected 배열 중 r과 c가 모두 같은 요소가 있는지 검사
+                && : AND 연산자. 양쪽이 모두 true일 때만 true
+                already = true → 이미 선택된 셀
+            */
+            if (already) return;
+            // 이미 선택된 셀이면 다시 추가하지 않고 종료
+
+            // ── 상하좌우 인접 여부 확인 알고리즘 (대각선 차단) ──
+            let last = selected[selected.length - 1];
+            /*
+                selected[selected.length - 1]: 배열의 마지막 요소
+                배열 인덱스는 0부터 시작하므로 마지막 인덱스 = 길이 - 1
+                → 직전에 선택한 셀의 좌표 {r, c}를 가져옴
+            */
+
+            let dr = Math.abs(r - last.r);
+            let dc = Math.abs(c - last.c);
+            /*
+                Math.abs(값): 절댓값 반환. 음수도 양수로 변환.
+                dr: 현재 셀과 마지막 선택 셀 사이의 행 거리
+                dc: 현재 셀과 마지막 선택 셀 사이의 열 거리
+                예) 바로 아래 칸: dr=1, dc=0 → 허용
+                    바로 오른칸: dr=0, dc=1 → 허용
+                    대각선 칸:   dr=1, dc=1 → 차단
+            */
+
+            let isAdjacent = (dr === 1 && dc === 0) || (dr === 0 && dc === 1);
+            /*
+                || : OR 연산자. 둘 중 하나라도 true이면 true.
+                (dr===1 && dc===0): 상하 방향으로 인접
+                (dr===0 && dc===1): 좌우 방향으로 인접
+                둘 다 아니면(대각선, 2칸 이상 등) isAdjacent = false
+            */
+
+            if (!isAdjacent) return;
+            // 인접하지 않으면(대각선 등) 선택하지 않고 종료
+
+            selected.push({ r, c });
+            // 인접 조건을 통과한 셀을 selected 배열에 추가
+
+            sum += board[r][c];
+            /*
+                board[r][c]: 해당 셀의 숫자값.
+                빈 셀(empty)은 board[r][c] === 0 이므로 sum에 0이 더해짐 → 합계에 영향 없음.
+                이 덕분에 빈 셀을 "통과"하는 드래그가 가능해짐.
+            */
+
+            // empty 셀은 시각 효과 없이 경로만 기록
+            if (!e.currentTarget.classList.contains("empty")) {
+                e.currentTarget.classList.add("active");
+                // 숫자가 있는 셀만 오렌지색으로 강조
+                // 빈 셀은 회색 그대로 유지 (시각 효과 없음)
+            }
+        }
+
+
+        // =====================
+        // 드래그 끝 함수
+        // =====================
+        /*
+            endDrag(): 마우스 버튼을 놓을 때 호출됨 (mouseup).
+            선택된 셀들의 합이 10이면 셀을 제거하고 점수를 획득.
+        */
+        function endDrag() {
+
+            if (!isDragging) return;
+            // 드래그 중이 아니었으면 (실수로 호출된 경우) 아무것도 안 함
+
+            isDragging = false;
+            // 드래그 종료 → 플래그를 false로 되돌림
+
+            if (sum === 10) {
+                // 선택된 셀들의 합이 정확히 10일 때만 제거
+
+                // ── 점수 계산: board를 0으로 바꾸기 전에 숫자 셀 개수를 먼저 셈 ──
+                let filledCount = selected.filter(cell => board[cell.r][cell.c] !== 0).length;
+                /*
+                    배열.filter(조건함수): 조건을 만족하는 요소만 모아 새 배열을 반환.
+                    board[cell.r][cell.c] !== 0 → 빈 칸(0)이 아닌 셀만 통과
+                    .length → 통과한 셀의 개수
+                    예) 숫자 셀 3칸 + 빈 칸 1칸 통과 → filledCount = 3
+                    ※ forEach로 board를 0으로 바꾸기 전에 계산해야
+                      원래 빈 칸과 방금 제거된 셀을 구분할 수 있음
+                */
+
+                selected.forEach(cell => {
+                    board[cell.r][cell.c] = 0;
+                    /*
+                        배열.forEach(콜백): 배열의 모든 요소에 대해 콜백 실행.
+                        cell → selected 배열의 각 요소 {r, c}
+                        board[cell.r][cell.c] = 0: 해당 위치를 0으로 바꿔 "제거" 처리
+                        → render()가 호출되면 0인 자리는 empty 셀로 그려짐
+                    */
+                });
+
+                score += filledCount * 10;
+                /*
+                    += : score = score + (filledCount * 10) 의 단축 표현
+                    filledCount * 10: 숫자 셀 1칸당 10점
+                    예) 숫자 셀 2칸 → 20점, 3칸 → 30점, 5칸 → 50점
+                    빈 칸을 통과해도 filledCount에 포함되지 않으므로 점수에 영향 없음
+                */
+
+                removedCells += filledCount;
+                // 이번 드래그에서 제거한 숫자 셀 수를 전체 누적값에 더함
+                // 빈 칸은 filledCount에 포함되지 않으므로 자동으로 제외됨
+                document.getElementById("score").innerText = "점수: " + score;
+                /*
+                    .innerText: 요소의 텍스트 내용을 읽거나 변경하는 속성
+                    "점수: " + score: 문자열 + 숫자 → 문자열로 이어붙임
+                    예: "점수: " + 30 → "점수: 30"
+                */
+            }
+
+            render();
+            // 보드 상태가 바뀌었으므로 화면을 다시 그림
+            // (sum !== 10이어도 호출 → active 클래스를 해제하기 위해)
+        }
+
+
+        // =====================
+        // 타이머 함수들
+        // =====================
+
+        /*
+            startTimer(): 1초마다 time을 1씩 줄이는 타이머를 시작.
+        */
+        function startTimer() {
+
+            timerInterval = setInterval(() => {
+                /*
+                    setInterval(함수, 간격ms):
+                    지정한 간격(밀리초)마다 함수를 반복 실행하는 내장 함수.
+                    1000ms = 1초
+                    반환값: 타이머의 고유 ID (나중에 clearInterval로 멈출 때 사용)
+                    → 반환값을 timerInterval 변수에 저장
+                */
+
+                time--;
+                // time = time - 1 의 단축 표현 (감소 연산자 --)
+
+                // 라벨 텍스트 갱신
+                document.getElementById("timer-label").innerText = "남은 시간 " + time + "s";
+
+                let pct = (time / 60) * 100;
+                /*
+                    남은 시간 비율을 퍼센트로 계산.
+                    time / 60 → 0~1 사이의 소수 (남은 비율)
+                    * 100     → 0~100 사이의 퍼센트
+                    예) time=30 → 50%, time=10 → 16.7%
+                    이 값을 #timer-bar의 width에 적용해 바가 줄어들게 함.
+                */
+                document.getElementById("timer-bar").style.width = pct + "%";
+                /*
+                    element.style.속성: JS로 인라인 스타일을 직접 변경.
+                    width를 pct%로 설정 → 바가 오른쪽에서 왼쪽으로 줄어드는 효과
+                    CSS의 transition: width 0.9s linear 덕분에 부드럽게 변함
+                */
+
+                if (time <= 10) {
+                    document.getElementById("timer-bar").classList.add("danger");
+                    document.getElementById("timer-label").style.color = "red";
+                    /*
+                        10초 이하가 되면 바에 danger 클래스 추가 → barPulse 애니메이션 실행
+                        라벨 텍스트도 빨간색으로 변경
+                    */
+                }
+
+                if (time <= 0) {
+                    // time이 0 이하가 되면 (= 60초 경과)
+                    endGame();
+                    // 게임 종료 함수 호출
+                }
+
+            }, 1000);
+            // 1000ms(1초) 간격으로 위 함수를 반복 실행
+        }
+
+        /*
+            resetTimer(): 타이머를 정지하고 시간을 60초로 초기화.
+            게임을 다시 시작할 때 기존 타이머가 중복 실행되지 않도록 먼저 정리.
+        */
+        function resetTimer() {
+
+            if (timerInterval !== null) {
+                /*
+                    !== : 값 또는 타입이 다를 때 true (엄격한 불일치 연산자)
+                    timerInterval !== null → 타이머가 실행 중인 경우에만 정지
+                */
+                clearInterval(timerInterval);
+                /*
+                    clearInterval(ID): setInterval로 만든 타이머를 ID로 찾아 정지시킴.
+                    이를 하지 않으면 게임을 재시작해도 이전 타이머가 계속 실행됨.
+                */
+                timerInterval = null;
+                // 타이머를 멈췄으니 ID도 null로 초기화
+            }
+
+            time = 60;
+            // 시간을 다시 60초로 리셋
+
+            document.getElementById("timer-bar").classList.remove("danger");
+            document.getElementById("timer-bar").style.width = "100%";
+            // 바를 100% 너비로 되돌림 (꽉 찬 상태로 초기화)
+
+            document.getElementById("timer-label").innerText = "남은 시간 60s";
+            document.getElementById("timer-label").style.color = "tomato";
+            // 라벨 색상도 원래 tomato로 복구
+
+            document.querySelector("#result").innerHTML = "";
+            // 게임 종료 메시지(#result)를 지워서 화면을 깨끗하게 초기화
+        }
+
+        /*
+            endGame(): 시간이 0이 되면 호출되어 게임을 종료.
+            모든 상태를 정리하고 결과 메시지를 표시.
+        */
+        function endGame() {
+            isDragging = false;
+            // 게임 종료 시 드래그 상태를 강제로 해제
+
+            clearInterval(timerInterval);
+            // 타이머 반복 실행을 멈춤
+
+            selected = [];
+            sum = 0;
+            // 선택 상태와 합계를 초기화
+
+            document.querySelectorAll(".active").forEach(cell => {
+                cell.classList.remove("active");
+                // classList.remove("클래스명"): 요소에서 해당 클래스를 제거
+                // → 오렌지색으로 강조된 셀들을 원래 색으로 돌려놓음
+            });
+
+            document.getElementById("game").innerHTML = "";
+            // 게임 보드를 빈 내용으로 교체 → 셀들이 화면에서 사라짐
+
+            document.getElementById("startBtn").style.display = "inline-block";
+            // 게임이 끝나면 시작 버튼을 다시 보이게 함
+            // inline-block: 버튼의 원래 display 속성
+
+            document.getElementById("stats-panel").style.display = "none";
+            // 게임이 끝나면 점수 + 타이머 패널을 숨김
+
+            document.querySelector("#result").innerHTML =
+                '<div class="result-card">' +
+                  '<h2>GAME OVER</h2>' +
+                  '<div class="result-cols">' +
+                    '<div class="result-row">' +
+                      '<span class="result-label">최종 점수</span>' +
+                      '<span class="result-value score-val">' + score + '</span>' +
+                    '</div>' +
+                    '<div class="result-row">' +
+                      '<span class="result-label">지운 셀</span>' +
+                      '<span class="result-value cells-val">' + removedCells + '칸</span>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+            /*
+                결과 화면을 카드 형태의 HTML로 구성.
+                .result-card: 전체 카드 박스
+                .result-row: 라벨과 값을 가로로 배치하는 행
+                .score-val / .cells-val: 각각 orange / tomato 색상으로 강조
+            */
+        }
+
+
+        // =====================
+        // 게임 시작 함수
+        // =====================
+        /*
+            startGame(): 게임 시작 버튼을 클릭하면 호출됨.
+            모든 상태를 초기화하고 게임을 새로 시작.
+        */
+        function startGame() {
+            score = 0;
+            // 점수를 0으로 초기화 (재시작 시 이전 점수가 남지 않도록)
+
+            removedCells = 0;
+            // 지운 셀 수도 0으로 초기화
+
+            document.getElementById("startBtn").style.display = "none";
+            // display: none → 요소를 화면에서 완전히 숨김 (공간도 차지하지 않음)
+            // 게임이 시작되면 버튼이 사라짐
+
+            document.getElementById("stats-panel").style.display = "block";
+            // display: block → 요소를 다시 보이게 함
+            // 게임이 시작되면 점수 + 타이머 패널이 나타남
+
+            document.querySelector("#score").innerText = `점수: ${score}`;
+            // 템플릿 리터럴로 점수 표시 갱신. `점수: ${score}` → "점수: 0"
+            // ※ #timer는 이제 내부에 timer-label, timer-bar가 있는 구조이므로
+            //   innerText로 덮어쓰면 내부 HTML이 사라짐 → resetTimer()에서 처리
+
+            createBoard(); // 새 게임판 생성 (board 배열을 1~9 랜덤값으로 채움)
+            render();      // 생성된 board를 화면에 그림
+            resetTimer();  // 기존 타이머 정지 + 시간 60초로 초기화
+            startTimer();  // 새 타이머 시작 (1초마다 카운트다운)
+        }
+
+        startBtn.addEventListener("click", startGame);
+        /*
+            startBtn(버튼 요소)에 "click" 이벤트 등록.
+            버튼을 클릭하면 startGame 함수가 호출됨.
+            이 한 줄이 버튼과 게임 시작 로직을 연결하는 핵심 코드.
+            스크립트 파일 최하단에 위치: HTML 요소가 모두 로드된 후 실행되도록.
+        */
+
+    </script>
+
+</body>
+
+</html>
